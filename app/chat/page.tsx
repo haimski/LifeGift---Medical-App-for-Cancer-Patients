@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
+import { RedFlagInterstitial } from "@/components/chat/RedFlagInterstitial";
 import {
   getPatientContext,
   type PatientContext,
@@ -48,6 +49,11 @@ export default function ChatPage() {
   const [activeGuidelineId, setActiveGuidelineId] = useState<string | null>(null);
   const [pendingFields, setPendingFields] = useState<PendingFields>({});
   const [followUpRoundCount, setFollowUpRoundCount] = useState(0);
+
+  // Driven strictly by the API response's own `redFlag` field (computed by
+  // the deterministic rules engine) — never by anything parsed from
+  // `assistantMessage`. See RedFlagInterstitial's doc comment.
+  const [redFlag, setRedFlag] = useState({ show: false, helplineNumber: "" });
 
   useEffect(() => {
     const ctx = getPatientContext();
@@ -114,6 +120,10 @@ export default function ChatPage() {
         setPendingFields({});
         setFollowUpRoundCount(0);
       }
+
+      if (data.type === "graded" && data.redFlag) {
+        setRedFlag({ show: true, helplineNumber: data.helplineNumber });
+      }
     } catch (err) {
       console.error("Chat request failed", err);
       const fallback: ChatMessage = {
@@ -137,7 +147,12 @@ export default function ChatPage() {
   return (
     <div className="flex flex-1 flex-col">
       <MessageList messages={messages} isAssistantTyping={isAssistantTyping} />
-      <MessageInput onSend={handleSend} disabled={isAssistantTyping} />
+      <MessageInput onSend={handleSend} disabled={isAssistantTyping || redFlag.show} />
+      <RedFlagInterstitial
+        show={redFlag.show}
+        helplineNumber={redFlag.helplineNumber}
+        onAcknowledge={() => setRedFlag((prev) => ({ ...prev, show: false }))}
+      />
     </div>
   );
 }
