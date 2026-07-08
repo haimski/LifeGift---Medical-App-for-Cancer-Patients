@@ -24,6 +24,7 @@ Every threshold in `lib/triage/guidelines/*.ts` is transcribed from the source P
 npm run dev    # Turbopack dev server (Next.js 16 — Turbopack is default, no flag needed)
 npm run lint   # ESLint flat config (next lint was removed in Next 16)
 npm run build
+npm run test   # Vitest — currently covers lib/triage/** (the rules engine)
 ```
 
 Next.js 16 is newer than most training data know about — check `node_modules/next/dist/docs/` before assuming an API works the way it used to (async `params`/`searchParams`, `middleware.ts` → `proxy.ts`, etc.)
