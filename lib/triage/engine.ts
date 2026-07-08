@@ -21,6 +21,32 @@ const FAIL_SAFE_ACTION =
   "We couldn't confidently match this to a specific guideline, so to be safe: please contact your 24-hour oncology helpline to talk through what you're experiencing.";
 
 /**
+ * Checks only the global override rules (e.g. neutropenic sepsis),
+ * independent of any guideline-specific grading. Exposed separately from
+ * `evaluate()` so callers (the /api/chat route) can short-circuit to Red
+ * the moment an override fires — even mid-conversation, before a
+ * guideline's own required fields are complete. Returns null if nothing
+ * overrides.
+ */
+export function checkGlobalOverrides(
+  fields: ExtractedFields,
+  ctx: PatientContext
+): EvaluationResult | null {
+  for (const rule of GLOBAL_OVERRIDE_RULES) {
+    if (rule.appliesIf(fields, ctx)) {
+      return {
+        grade: "RED",
+        guidelineId: rule.id,
+        gradeLabel: rule.displayName,
+        actionText: rule.action,
+        source: "global_override",
+      };
+    }
+  }
+  return null;
+}
+
+/**
  * The deterministic safety core of the app. Never call an LLM from in
  * here — every grade this function returns must be traceable to a literal
  * criterion in lib/triage/guidelines/*.ts or a global override rule. See
@@ -34,17 +60,8 @@ export function evaluate(
 ): EvaluationResult {
   // 1. Global overrides run first, on every turn, regardless of which
   //    guideline is active — see neutropenic-sepsis.ts's doc comment.
-  for (const rule of GLOBAL_OVERRIDE_RULES) {
-    if (rule.appliesIf(fields, ctx)) {
-      return {
-        grade: "RED",
-        guidelineId: rule.id,
-        gradeLabel: rule.displayName,
-        actionText: rule.action,
-        source: "global_override",
-      };
-    }
-  }
+  const overrideResult = checkGlobalOverrides(fields, ctx);
+  if (overrideResult) return overrideResult;
 
   // 2. Resolve the active guideline, following an alternate pathway
   //    (e.g. diarrhoea -> colitis) if the patient context requires it.
