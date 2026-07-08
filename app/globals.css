@@ -1,0 +1,85 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f2f8fc;
+  --surface: #ffffff;
+  --foreground: #1c2b3a;
+  --foreground-muted: #55697a;
+  --border: #d7e6f1;
+
+  --azure-50: #f3f8fc;
+  --azure-100: #e4eff8;
+  --azure-200: #c9dff0;
+  --azure-300: #a0c7e4;
+  --azure-400: #6fa8d0;
+  --azure-500: #4488be;
+  --azure-600: #35709f;
+  --azure-700: #2a5980;
+  --azure-800: #1f4360;
+  --azure-900: #16324a;
+
+  /* Reserved for real triage grades only (badges, banners, the Red
+     interstitial) — never used decoratively elsewhere in the UI, so
+     Red keeps its full attention-grabbing weight when it appears. */
+  --rag-green: #2f9e63;
+  --rag-green-bg: #e6f6ee;
+  --rag-amber: #c98a1f;
+  --rag-amber-bg: #fdf1dc;
+  --rag-red: #c22f3a;
+  --rag-red-bg: #fbe8ea;
+  --rag-red-strong: #a3111c;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-border: var(--border);
+
+  --color-azure-50: var(--azure-50);
+  --color-azure-100: var(--azure-100);
+  --color-azure-200: var(--azure-200);
+  --color-azure-300: var(--azure-300);
+  --color-azure-400: var(--azure-400);
+  --color-azure-500: var(--azure-500);
+  --color-azure-600: var(--azure-600);
+  --color-azure-700: var(--azure-700);
+  --color-azure-800: var(--azure-800);
+  --color-azure-900: var(--azure-900);
+
+  --color-rag-green: var(--rag-green);
+  --color-rag-green-bg: var(--rag-green-bg);
+  --color-rag-amber: var(--rag-amber);
+  --color-rag-amber-bg: var(--rag-amber-bg);
+  --color-rag-red: var(--rag-red);
+  --color-rag-red-bg: var(--rag-red-bg);
+  --color-rag-red-strong: var(--rag-red-strong);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0f1a24;
+    --surface: #16232f;
+    --foreground: #eaf2f8;
+    --foreground-muted: #9db2c2;
+    --border: #22384a;
+
+    --rag-green-bg: #10301f;
+    --rag-amber-bg: #33270d;
+    --rag-red-bg: #331419;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+}
+
+a {
+  color: inherit;
+}
