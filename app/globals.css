@@ -74,12 +74,24 @@
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-}
+/*
+ * Tailwind v4 wraps its own reset/utilities in CSS cascade layers. Plain,
+ * unlayered rules always beat layered ones regardless of specificity — so
+ * without @layer base here, this file's `a { color: inherit }` was
+ * silently overriding every Tailwind text-color utility applied to a link
+ * anywhere in the app (e.g. text-rag-red-strong on the 999 button), which
+ * is how the emergency-call button ended up rendering invisible white
+ * text on a white background. Wrapping it in @layer base puts it back
+ * below Tailwind's utilities layer, where a utility class correctly wins.
+ */
+@layer base {
+  body {
+    background: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  }
 
-a {
-  color: inherit;
+  a {
+    color: inherit;
+  }
 }

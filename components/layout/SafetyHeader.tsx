@@ -1,17 +1,36 @@
-import { toTelHref, EMERGENCY_NUMBER } from "@/lib/utils/phone";
+"use client";
 
-interface SafetyHeaderProps {
-  /** Patient's own trust 24-hour oncology helpline number. Placeholder until onboarding (Phase 1) writes a real one. */
-  helplineNumber?: string;
-}
+import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { toTelHref, EMERGENCY_NUMBER } from "@/lib/utils/phone";
+import { getPatientContext } from "@/lib/context/patientContext";
+
+const PLACEHOLDER = "Not set up yet";
 
 /**
  * Persistent, LLM-independent safety chrome. Mounted once in the root layout
  * so it appears on every screen (onboarding included) regardless of chat
  * state — it must never depend on anything the assistant says.
+ *
+ * Starts with the placeholder (matching the build-time static server
+ * output, which has no `window`/localStorage) and corrects to the
+ * patient's real helpline number after mount — see the same hydration-safe
+ * pattern used in app/chat/page.tsx. Re-checks on every route change too,
+ * since this component lives in the root layout and doesn't remount as
+ * the patient moves through onboarding — without that, it would keep
+ * showing the placeholder even after the patient enters a real number.
  */
-export function SafetyHeader({ helplineNumber = "Not set up yet" }: SafetyHeaderProps) {
-  const hasHelpline = helplineNumber !== "Not set up yet";
+export function SafetyHeader() {
+  const pathname = usePathname();
+  const [helplineNumber, setHelplineNumber] = useState(PLACEHOLDER);
+
+  useEffect(() => {
+    const context = getPatientContext();
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe: see doc comment above
+    setHelplineNumber(context?.helplineNumber || PLACEHOLDER);
+  }, [pathname]);
+
+  const hasHelpline = helplineNumber !== PLACEHOLDER;
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
