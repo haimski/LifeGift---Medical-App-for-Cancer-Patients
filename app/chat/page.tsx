@@ -13,29 +13,11 @@ import {
   saveConversation,
   makeMessageId,
 } from "@/lib/context/conversationStore";
-import type { ChatMessage } from "@/types/api";
+import type { ChatApiRequest, ChatApiResponse, ChatMessage, PendingFields } from "@/types/api";
 
-/**
- * Phase 1 canned responses — purely to validate bubble styling and mobile
- * layout before the real extraction/engine/phrasing pipeline (Phase 2/3)
- * exists. Not real triage advice.
- */
-const CANNED_RESPONSES: Omit<ChatMessage, "id" | "timestamp" | "role">[] = [
-  {
-    content:
-      "Thanks for letting me know. This is a placeholder response while the real symptom-checking engine is still being built.",
-  },
-  {
-    content:
-      "In a future version, this reply will come from the UKONS-based rules engine, phrased for you — for now it's just demonstrating the chat layout.",
-    grade: "GREEN",
-  },
-  {
-    content:
-      "Here's an example of what an Amber result will look like once it's wired up.",
-    grade: "AMBER",
-  },
-];
+const MAX_HISTORY_SENT = 20;
+const FAIL_SAFE_MESSAGE =
+  "Sorry, something went wrong on our end. To be safe, please contact your 24-hour helpline to discuss your symptoms.";
 
 function buildInitialMessages(cancerType: string): ChatMessage[] {
   const existing = getConversation();
@@ -59,7 +41,13 @@ export default function ChatPage() {
   const [context, setContext] = useState<PatientContext | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
-  const [cannedIndex, setCannedIndex] = useState(0);
+
+  // Tracks the in-progress complaint across follow-up turns; reset once a
+  // turn comes back graded (or fail-safed) so the next message starts a
+  // fresh complaint. See app/api/chat/route.ts for how these are used.
+  const [activeGuidelineId, setActiveGuidelineId] = useState<string | null>(null);
+  const [pendingFields, setPendingFields] = useState<PendingFields>({});
+  const [followUpRoundCount, setFollowUpRoundCount] = useState(0);
 
   useEffect(() => {
     const ctx = getPatientContext();
@@ -76,30 +64,72 @@ export default function ChatPage() {
     if (context) saveConversation(messages);
   }, [context, messages]);
 
-  function handleSend(content: string) {
+  async function handleSend(content: string) {
+    if (!context) return;
+
     const patientMessage: ChatMessage = {
       id: makeMessageId(),
       role: "patient",
       content,
       timestamp: new Date().toISOString(),
     };
+    const historyForRequest = [...messages, patientMessage].slice(-MAX_HISTORY_SENT);
     setMessages((prev) => [...prev, patientMessage]);
     setIsAssistantTyping(true);
 
-    // Canned delay to demonstrate the typing indicator; replaced by a real
-    // /api/chat call in Phase 3.
-    setTimeout(() => {
-      const canned = CANNED_RESPONSES[cannedIndex % CANNED_RESPONSES.length];
+    try {
+      const requestBody: ChatApiRequest = {
+        patientContext: context,
+        conversationHistory: historyForRequest,
+        message: content,
+        activeGuidelineId,
+        pendingFields,
+        followUpRoundCount,
+      };
+
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(requestBody),
+      });
+      const data: ChatApiResponse = await res.json();
+
       const assistantMessage: ChatMessage = {
         id: makeMessageId(),
         role: "assistant",
+        content: data.assistantMessage,
         timestamp: new Date().toISOString(),
-        ...canned,
+        grade: data.type !== "follow_up" ? data.grade : undefined,
       };
       setMessages((prev) => [...prev, assistantMessage]);
+
+      if (data.type === "follow_up") {
+        setActiveGuidelineId(data.activeGuidelineId);
+        setPendingFields(data.pendingFields);
+        setFollowUpRoundCount(data.followUpRoundCount);
+      } else {
+        // graded or error_failsafe: this complaint is resolved (or we've
+        // fail-safed on it) — start fresh for whatever the patient says next.
+        setActiveGuidelineId(null);
+        setPendingFields({});
+        setFollowUpRoundCount(0);
+      }
+    } catch (err) {
+      console.error("Chat request failed", err);
+      const fallback: ChatMessage = {
+        id: makeMessageId(),
+        role: "assistant",
+        content: FAIL_SAFE_MESSAGE,
+        timestamp: new Date().toISOString(),
+        grade: "AMBER",
+      };
+      setMessages((prev) => [...prev, fallback]);
+      setActiveGuidelineId(null);
+      setPendingFields({});
+      setFollowUpRoundCount(0);
+    } finally {
       setIsAssistantTyping(false);
-      setCannedIndex((i) => i + 1);
-    }, 900);
+    }
   }
 
   if (!context) return null;

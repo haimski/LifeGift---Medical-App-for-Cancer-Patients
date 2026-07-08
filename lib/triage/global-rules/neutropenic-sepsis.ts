@@ -1,4 +1,32 @@
-import type { GlobalOverrideRule } from "@/lib/triage/types";
+import type { GlobalOverrideRule, ScreeningField } from "@/lib/triage/types";
+
+/**
+ * These three fields aren't owned by any single guideline — the override
+ * above needs them checked on every turn regardless of what symptom the
+ * patient is describing. The LLM extraction step (lib/llm/extraction.ts)
+ * always attempts to populate them, in addition to whichever guideline's
+ * own screening fields are active.
+ */
+export const GLOBAL_OVERRIDE_SCREENING_FIELDS: ScreeningField[] = [
+  {
+    id: "temperatureC",
+    question: "What's your temperature (in Celsius), if you've taken it?",
+    type: "number",
+    required: false,
+  },
+  {
+    id: "feelsGenerallyUnwell",
+    question: "Would you say you're feeling generally unwell?",
+    type: "boolean",
+    required: false,
+  },
+  {
+    id: "hasRigorsOrShivering",
+    question: "Have you had any shivering or rigors (shaking chills)?",
+    type: "boolean",
+    required: false,
+  },
+];
 
 /**
  * UKONS 24-Hour Triage Tool, "Fever" row + Acute Oncology Initial
