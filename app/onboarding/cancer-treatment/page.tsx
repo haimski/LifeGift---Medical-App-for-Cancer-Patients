@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { CancerTypePicker } from "@/components/onboarding/CancerTypePicker";
 import { TreatmentTypePicker } from "@/components/onboarding/TreatmentTypePicker";
@@ -14,6 +15,8 @@ import {
 
 export default function OnboardingCancerTreatmentPage() {
   const router = useRouter();
+  const t = useTranslations("onboarding.cancerTreatment");
+  const tCommon = useTranslations("common");
   const [cancerType, setCancerType] = useState("");
   const [treatmentType, setTreatmentType] = useState<TreatmentType | null>(
     null
@@ -55,24 +58,21 @@ export default function OnboardingCancerTreatmentPage() {
     <main className="flex flex-1 flex-col gap-6 px-5 py-8">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-heading">
-          A bit about your treatment
+          {t("title")}
         </h1>
-        <p className="mt-1 text-sm text-foreground-muted">
-          This helps us give advice that fits your situation. You can change
-          this later.
-        </p>
+        <p className="mt-1 text-sm text-foreground-muted">{t("subtitle")}</p>
       </div>
 
       <CancerTypePicker value={cancerType} onChange={setCancerType} />
       <TreatmentTypePicker value={treatmentType} onChange={setTreatmentType} />
       <YesNoToggle
-        label="Have you had any cancer treatment (including tablets) in the last 6 weeks?"
+        label={t("recentTreatmentQuestion")}
         value={recentSact}
         onChange={setRecentSact}
       />
 
       <Button onClick={handleContinue} disabled={!canContinue}>
-        Continue
+        {tCommon("continue")}
       </Button>
     </main>
   );

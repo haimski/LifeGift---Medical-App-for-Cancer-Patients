@@ -1,9 +1,7 @@
 "use client";
 
-import {
-  TREATMENT_TYPE_LABELS,
-  type TreatmentType,
-} from "@/lib/context/patientContext";
+import { useTranslations } from "next-intl";
+import { type TreatmentType } from "@/lib/context/patientContext";
 
 const ORDER: TreatmentType[] = [
   "chemotherapy_sact",
@@ -23,10 +21,12 @@ export function TreatmentTypePicker({
   value,
   onChange,
 }: TreatmentTypePickerProps) {
+  const t = useTranslations("onboarding.treatmentTypePicker");
+  const tTypes = useTranslations("treatmentTypes");
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-foreground">
-        What treatment are you currently receiving?
+        {t("question")}
       </p>
       <div className="flex flex-col gap-2">
         {ORDER.map((type) => (
@@ -35,13 +35,13 @@ export function TreatmentTypePicker({
             type="button"
             onClick={() => onChange(type)}
             aria-pressed={value === type}
-            className={`min-h-11 rounded-xl border px-3.5 text-left text-sm font-medium transition-colors ${
+            className={`min-h-11 rounded-xl border px-3.5 text-start text-sm font-medium transition-colors ${
               value === type
                 ? "border-azure-600 bg-azure-600 text-white"
                 : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
             }`}
           >
-            {TREATMENT_TYPE_LABELS[type]}
+            {tTypes(type)}
           </button>
         ))}
       </div>

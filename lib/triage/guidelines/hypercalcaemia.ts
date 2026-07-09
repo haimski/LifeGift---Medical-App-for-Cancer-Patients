@@ -10,29 +10,38 @@ import type { ToxicityGuideline } from "@/lib/triage/types";
  * change or seizures/collapse -> Red) that always directs to the
  * helpline for a blood test, rather than attempting to estimate the
  * calcium level itself.
+ *
+ * Patient-facing strings translated to Hebrew — original English
+ * preserved per field below for clinician review against the source PDF.
  */
 export const hypercalcaemiaGuideline: ToxicityGuideline = {
   id: "hypercalcaemia",
-  displayName: "Possible hypercalcaemia",
-  aliases: ["high calcium", "very thirsty", "excessive thirst"],
+  // EN: "Possible hypercalcaemia"
+  displayName: "חשד לרמת סידן גבוהה בדם (היפרקלצמיה)",
+  // EN: ["high calcium", "very thirsty", "excessive thirst"]
+  aliases: ["סידן גבוה", "צמא מאוד", "צמאון מוגזם"],
   boilerplateFooter: AO_TEAM_BOILERPLATE,
   screeningFields: [
     {
       id: "hasMildSymptoms",
+      // EN: "Have you been unusually thirsty or passing a lot of urine, or do
+      // you have nausea, constipation, bone pain, or fatigue?"
       question:
-        "Have you been unusually thirsty or passing a lot of urine, or do you have nausea, constipation, bone pain, or fatigue?",
+        "האם היית צמא/ה באופן חריג או הטלת שתן בכמות גדולה, או שיש לך בחילה, עצירות, כאבי עצמות, או עייפות?",
       type: "boolean",
       required: true,
     },
     {
       id: "hasConfusionOrMoodChange",
-      question: "Any new confusion, drowsiness, or mood/behaviour changes?",
+      // EN: "Any new confusion, drowsiness, or mood/behaviour changes?"
+      question: "האם יש בלבול, ישנוניות, או שינויים במצב הרוח/בהתנהגות שהם חדשים?",
       type: "boolean",
       required: true,
     },
     {
       id: "hasSeizuresOrCollapse",
-      question: "Any seizures, fainting, or collapse?",
+      // EN: "Any seizures, fainting, or collapse?"
+      question: "האם היו התקפים, התעלפות, או קריסה?",
       type: "boolean",
       required: false,
     },
@@ -40,34 +49,50 @@ export const hypercalcaemiaGuideline: ToxicityGuideline = {
   grades: [
     {
       grade: "RED",
-      label: "Severe — possible seizure/collapse",
-      description: "Seizures, collapse, or loss of consciousness.",
+      // EN: "Severe — possible seizure/collapse"
+      label: "חמור — אפשרות להתקף/קריסה",
+      // EN: "Seizures, collapse, or loss of consciousness."
+      description: "התקפים, קריסה, או אובדן הכרה.",
       matches: (f) => f.hasSeizuresOrCollapse === true,
-      action: "This is a medical emergency. Call 999 or go to A&E now.",
+      // EN: "This is a medical emergency. Call 999 or go to A&E now."
+      action: "זהו מצב חירום רפואי. התקשר/י ל-999 או לך/י מיד למיון.",
     },
     {
       grade: "RED",
-      label: "Confusion or mood change",
-      description: "New confusion, drowsiness, or mood/behaviour changes.",
+      // EN: "Confusion or mood change"
+      label: "בלבול או שינוי במצב הרוח",
+      // EN: "New confusion, drowsiness, or mood/behaviour changes."
+      description: "בלבול, ישנוניות, או שינויים במצב הרוח/בהתנהגות שהם חדשים.",
       matches: (f) => f.hasConfusionOrMoodChange === true,
+      // EN: "This needs an urgent blood test today to check your calcium
+      // level. Please call your 24-hour helpline now or go to A&E if you're
+      // very drowsy or confused."
       action:
-        "This needs an urgent blood test today to check your calcium level. Please call your 24-hour helpline now or go to A&E if you're very drowsy or confused.",
+        "זה מצריך בדיקת דם דחופה היום כדי לבדוק את רמת הסידן שלך. אנא התקשר/י עכשיו לקו החירום הפעיל 24 שעות ביממה, או לך/י למיון אם את/ה ישנוני/ת או מבולבל/ת מאוד.",
     },
     {
       grade: "AMBER",
-      label: "Mild symptoms",
-      description: "Excessive thirst, nausea, constipation, bone pain, or fatigue.",
+      // EN: "Mild symptoms"
+      label: "תסמינים קלים",
+      // EN: "Excessive thirst, nausea, constipation, bone pain, or fatigue."
+      description: "צמאון מוגזם, בחילה, עצירות, כאבי עצמות, או עייפות.",
       matches: (f) => f.hasMildSymptoms === true,
+      // EN: "These can be symptoms of a high calcium level, which is checked
+      // with a simple blood test. Please call your 24-hour helpline today to
+      // arrange one."
       action:
-        "These can be symptoms of a high calcium level, which is checked with a simple blood test. Please call your 24-hour helpline today to arrange one.",
+        "אלו יכולים להיות תסמינים של רמת סידן גבוהה, שנבדקת בבדיקת דם פשוטה. אנא התקשר/י היום לקו החירום הפעיל 24 שעות ביממה כדי לתאם אחת.",
     },
     {
       grade: "GREEN",
-      label: "None",
-      description: "None of the above symptoms.",
+      // EN: "None"
+      label: "ללא",
+      // EN: "None of the above symptoms."
+      description: "אף אחד מהתסמינים הנ\"ל.",
       matches: (f) =>
         f.hasMildSymptoms === false && f.hasConfusionOrMoodChange === false,
-      action: "No specific action needed right now.",
+      // EN: "No specific action needed right now."
+      action: "אין צורך בפעולה מיוחדת כרגע.",
     },
   ],
 };

@@ -1,3 +1,7 @@
+"use client";
+
+import { useTranslations } from "next-intl";
+
 interface YesNoToggleProps {
   label: string;
   value: boolean | null;
@@ -5,16 +9,17 @@ interface YesNoToggleProps {
 }
 
 export function YesNoToggle({ label, value, onChange }: YesNoToggleProps) {
+  const t = useTranslations("common");
+  const options = [
+    { text: t("yes"), val: true },
+    { text: t("no"), val: false },
+  ] as const;
+
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-foreground">{label}</p>
       <div className="flex gap-2">
-        {(
-          [
-            { text: "Yes", val: true },
-            { text: "No", val: false },
-          ] as const
-        ).map((option) => (
+        {options.map((option) => (
           <button
             key={option.text}
             type="button"

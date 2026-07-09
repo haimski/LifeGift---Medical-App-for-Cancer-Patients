@@ -8,7 +8,9 @@ interface AssistantBubbleProps {
 
 export function AssistantBubble({ content, grade }: AssistantBubbleProps) {
   return (
-    <div className="flex justify-start">
+    // Pinned physically left regardless of text direction — mirrors
+    // PatientBubble's pinning; see its comment.
+    <div className="flex ltr:justify-start rtl:justify-end">
       <div className="flex max-w-[80%] flex-col gap-1.5 rounded-2xl rounded-bl-md border border-border bg-surface px-4 py-2.5 text-sm text-foreground">
         {grade && <GradeBadge grade={grade} />}
         <span>{content}</span>

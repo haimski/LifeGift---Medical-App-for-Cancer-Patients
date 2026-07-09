@@ -30,7 +30,7 @@ describe("vomiting guideline", () => {
   it("distinguishes Grade 3 from Grade 4 within Red", () => {
     const grade3 = evaluate({ vomitingEpisodesLast24h: 7 }, ctx, "vomiting");
     const grade4 = evaluate({ vomitingEpisodesLast24h: 15 }, ctx, "vomiting");
-    expect(grade3.gradeLabel).toBe("Grade 3 (Red)");
-    expect(grade4.gradeLabel).toBe("Grade 4 (Red)");
+    expect(grade3.gradeLabel).toBe("דרגה 3 (אדום)");
+    expect(grade4.gradeLabel).toBe("דרגה 4 (אדום)");
   });
 });

@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import type { RagGrade } from "@/types/api";
 
 const STYLES: Record<RagGrade, string> = {
@@ -6,18 +7,19 @@ const STYLES: Record<RagGrade, string> = {
   RED: "bg-rag-red-bg text-rag-red-badge-text",
 };
 
-const LABELS: Record<RagGrade, string> = {
-  GREEN: "Green — no cause for concern",
-  AMBER: "Amber — contact your team",
-  RED: "Red — urgent",
+const LABEL_KEYS: Record<RagGrade, string> = {
+  GREEN: "green",
+  AMBER: "amber",
+  RED: "red",
 };
 
 export function GradeBadge({ grade }: { grade: RagGrade }) {
+  const t = useTranslations("gradeBadge");
   return (
     <span
       className={`inline-flex w-fit items-center rounded-full px-2.5 py-1 text-xs font-semibold ${STYLES[grade]}`}
     >
-      {LABELS[grade]}
+      {t(LABEL_KEYS[grade])}
     </span>
   );
 }

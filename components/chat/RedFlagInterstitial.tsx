@@ -1,3 +1,4 @@
+import { useTranslations } from "next-intl";
 import { toTelHref, EMERGENCY_NUMBER } from "@/lib/utils/phone";
 
 interface RedFlagInterstitialProps {
@@ -18,6 +19,8 @@ export function RedFlagInterstitial({
   helplineNumber,
   onAcknowledge,
 }: RedFlagInterstitialProps) {
+  const t = useTranslations("redFlag");
+
   if (!show) return null;
 
   const hasHelpline = helplineNumber.trim().length > 0;
@@ -33,12 +36,9 @@ export function RedFlagInterstitial({
         🚨
       </span>
       <h1 id="red-flag-title" className="text-2xl font-bold">
-        Go to A&amp;E now
+        {t("title")}
       </h1>
-      <p className="max-w-xs text-base">
-        Based on what you&apos;ve told us, this needs urgent medical attention
-        right away — please don&apos;t wait to see if it improves.
-      </p>
+      <p className="max-w-xs text-base">{t("body")}</p>
 
       <div className="flex w-full max-w-xs flex-col gap-3">
         <a
@@ -46,7 +46,7 @@ export function RedFlagInterstitial({
           className="flex min-h-14 items-center justify-center gap-2 rounded-xl bg-white px-4 text-lg font-bold text-rag-red-strong"
         >
           <span aria-hidden>📞</span>
-          Call 999
+          {t("call999")}
         </a>
         {hasHelpline && (
           <a
@@ -54,7 +54,7 @@ export function RedFlagInterstitial({
             className="flex min-h-14 items-center justify-center gap-2 rounded-xl border-2 border-white px-4 text-lg font-semibold text-white"
           >
             <span aria-hidden>📞</span>
-            Call your 24-hour helpline
+            {t("callHelpline")}
           </a>
         )}
       </div>
@@ -64,7 +64,7 @@ export function RedFlagInterstitial({
         onClick={onAcknowledge}
         className="mt-4 min-h-11 px-4 text-sm font-medium text-white underline underline-offset-4"
       >
-        I understand
+        {t("acknowledge")}
       </button>
     </div>
   );

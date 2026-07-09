@@ -1,24 +1,23 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 
-const COMMON_CANCER_TYPES = [
-  "Breast",
-  "Lung",
-  "Bowel / colorectal",
-  "Prostate",
-  "Lymphoma",
-  "Leukaemia",
-  "Myeloma",
-  "Ovarian",
-  "Pancreatic",
-  "Skin / melanoma",
-  "Head and neck",
-  "Bladder",
-  "Kidney",
-];
-
-const OTHER = "Other";
+const CANCER_TYPE_KEYS = [
+  "breast",
+  "lung",
+  "bowel",
+  "prostate",
+  "lymphoma",
+  "leukaemia",
+  "myeloma",
+  "ovarian",
+  "pancreatic",
+  "skin",
+  "headNeck",
+  "bladder",
+  "kidney",
+] as const;
 
 interface CancerTypePickerProps {
   value: string;
@@ -26,16 +25,20 @@ interface CancerTypePickerProps {
 }
 
 export function CancerTypePicker({ value, onChange }: CancerTypePickerProps) {
-  const isKnownType = COMMON_CANCER_TYPES.includes(value);
+  const t = useTranslations("onboarding.cancerTypePicker");
+  // The picker's displayed (translated) labels double as the stored value —
+  // there's a single active locale, so this mirrors the pre-i18n behaviour.
+  const commonTypes = CANCER_TYPE_KEYS.map((key) => t(`types.${key}`));
+  const isKnownType = commonTypes.includes(value);
   const [showOther, setShowOther] = useState(value.length > 0 && !isKnownType);
 
   return (
     <div>
       <p className="mb-2 text-sm font-medium text-foreground">
-        What type of cancer are you being treated for?
+        {t("question")}
       </p>
       <div className="flex flex-wrap gap-2">
-        {COMMON_CANCER_TYPES.map((type) => (
+        {commonTypes.map((type) => (
           <button
             key={type}
             type="button"
@@ -66,7 +69,7 @@ export function CancerTypePicker({ value, onChange }: CancerTypePickerProps) {
               : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
           }`}
         >
-          {OTHER}
+          {t("other")}
         </button>
       </div>
       {showOther && (
@@ -74,7 +77,7 @@ export function CancerTypePicker({ value, onChange }: CancerTypePickerProps) {
           type="text"
           value={isKnownType ? "" : value}
           onChange={(event) => onChange(event.target.value)}
-          placeholder="Tell us the type"
+          placeholder={t("otherPlaceholder")}
           autoFocus
           className="mt-3 min-h-11 w-full rounded-xl border border-azure-200 bg-surface px-3.5 text-sm text-foreground outline-none focus:border-azure-500"
         />

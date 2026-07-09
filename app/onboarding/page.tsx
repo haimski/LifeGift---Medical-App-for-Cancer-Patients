@@ -1,43 +1,37 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 export default function OnboardingWelcomePage() {
   const router = useRouter();
+  const t = useTranslations("onboarding.welcome");
+  const tCommon = useTranslations("common");
 
   return (
     <main className="flex flex-1 flex-col justify-center gap-5 px-5 py-10">
       <div className="text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-heading">
-          Welcome to LifeGift
+          {t("title")}
         </h1>
-        <p className="mt-2 text-sm text-foreground-muted">
-          A calm place to check in about symptoms during your cancer
-          treatment.
-        </p>
+        <p className="mt-2 text-sm text-foreground-muted">{t("subtitle")}</p>
       </div>
 
       <Card className="text-sm text-foreground">
-        <p className="mb-3">
-          LifeGift can help you understand whether a symptom is safe to
-          watch, worth calling your care team about, or needs urgent
-          attention — based on the same guidance your 24-hour oncology
-          helpline uses.
-        </p>
+        <p className="mb-3">{t("description")}</p>
         <p className="rounded-xl border border-rag-red bg-rag-red-bg px-3 py-2.5 font-medium text-rag-red-badge-text">
-          This does not replace emergency care. If you think this is a
-          medical emergency, call 999 now.
+          {t("emergencyNotice")}
         </p>
       </Card>
 
       <div className="flex flex-col gap-2">
         <Button onClick={() => router.push("/onboarding/cancer-treatment")}>
-          Continue
+          {tCommon("continue")}
         </Button>
         <p className="text-center text-xs text-foreground-muted">
-          No account or sign-in needed to get started.
+          {t("noAccountNeeded")}
         </p>
       </div>
     </main>

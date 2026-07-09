@@ -6,23 +6,29 @@ import type { GlobalOverrideRule, ScreeningField } from "@/lib/triage/types";
  * patient is describing. The LLM extraction step (lib/llm/extraction.ts)
  * always attempts to populate them, in addition to whichever guideline's
  * own screening fields are active.
+ *
+ * Questions translated to Hebrew — original English preserved per field
+ * below for clinician review against the source PDF.
  */
 export const GLOBAL_OVERRIDE_SCREENING_FIELDS: ScreeningField[] = [
   {
     id: "temperatureC",
-    question: "What's your temperature (in Celsius), if you've taken it?",
+    // EN: "What's your temperature (in Celsius), if you've taken it?"
+    question: "מהי הטמפרטורה שלך (במעלות צלזיוס), אם מדדת?",
     type: "number",
     required: false,
   },
   {
     id: "feelsGenerallyUnwell",
-    question: "Would you say you're feeling generally unwell?",
+    // EN: "Would you say you're feeling generally unwell?"
+    question: "האם היית אומר/ת שאתה מרגיש/ה לא טוב באופן כללי?",
     type: "boolean",
     required: false,
   },
   {
     id: "hasRigorsOrShivering",
-    question: "Have you had any shivering or rigors (shaking chills)?",
+    // EN: "Have you had any shivering or rigors (shaking chills)?"
+    question: "האם היו לך רעידות או צמרמורות (חום עם רעד)?",
     type: "boolean",
     required: false,
   },
@@ -43,10 +49,14 @@ export const GLOBAL_OVERRIDE_SCREENING_FIELDS: ScreeningField[] = [
  * Contact telephone helpline for URGENT Assessment - Risk of neutropenic
  * sepsis. ALERT - Patients on steroids/analgesics or dehydrated may not
  * present with pyrexia but may still have infection."
+ *
+ * displayName/action translated to Hebrew — original English preserved
+ * below for clinician review against the source PDF.
  */
 export const neutropenicSepsisOverride: GlobalOverrideRule = {
   id: "neutropenic_sepsis_override",
-  displayName: "Suspected Neutropenic Sepsis",
+  // EN: "Suspected Neutropenic Sepsis"
+  displayName: "חשד לספסיס נויטרופני (Neutropenic Sepsis)",
   grade: "RED",
   appliesIf: (fields, ctx) => {
     if (!ctx.recentSactWithin6Weeks) return false;
@@ -62,8 +72,13 @@ export const neutropenicSepsisOverride: GlobalOverrideRule = {
       fields.hasRigorsOrShivering === true
     );
   },
+  // EN: "Because you've had cancer treatment in the last 6 weeks and have
+  // these symptoms, this could be neutropenic sepsis, which is a medical
+  // emergency. Go to A&E now or call your 24-hour oncology helpline
+  // immediately — do not wait to see if it improves. Antibiotics usually
+  // need to start within 1 hour, so please don't delay."
   action:
-    "Because you've had cancer treatment in the last 6 weeks and have these symptoms, this could be neutropenic sepsis, which is a medical emergency. " +
-    "Go to A&E now or call your 24-hour oncology helpline immediately — do not wait to see if it improves. " +
-    "Antibiotics usually need to start within 1 hour, so please don't delay.",
+    "מכיוון שעברת טיפול בסרטן בשישה השבועות האחרונים ויש לך תסמינים אלו, ייתכן שמדובר בספסיס נויטרופני, שהוא מצב חירום רפואי. " +
+    "לך/י מיד למיון או התקשר/י מיד לקו החירום האונקולוגי הפעיל 24 שעות ביממה — אין להמתין כדי לראות אם המצב משתפר. " +
+    "בדרך כלל יש להתחיל אנטיביוטיקה תוך שעה אחת, לכן נא לא להשתהות.",
 };

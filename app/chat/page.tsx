@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { RedFlagInterstitial } from "@/components/chat/RedFlagInterstitial";
@@ -18,19 +19,18 @@ import {
 import type { ChatApiRequest, ChatApiResponse, ChatMessage, PendingFields } from "@/types/api";
 
 const MAX_HISTORY_SENT = 20;
-const FAIL_SAFE_MESSAGE =
-  "Sorry, something went wrong on our end. To be safe, please contact your 24-hour helpline to discuss your symptoms.";
-const SAFETY_NET_MESSAGE =
-  "Before we finish — is there anything else going on, like a temperature, nausea, or unusual bleeding? If so, just tell me.";
 
-function buildInitialMessages(cancerType: string): ChatMessage[] {
+function buildInitialMessages(
+  cancerType: string,
+  greeting: string
+): ChatMessage[] {
   const existing = getConversation();
   if (existing.length > 0) return existing;
   return [
     {
       id: makeMessageId(),
       role: "assistant",
-      content: `Hi! I can see you're being treated for ${cancerType.toLowerCase()} cancer. Tell me what's going on and I'll help you figure out the next step.`,
+      content: greeting,
       timestamp: new Date().toISOString(),
     },
   ];
@@ -38,6 +38,7 @@ function buildInitialMessages(cancerType: string): ChatMessage[] {
 
 export default function ChatPage() {
   const router = useRouter();
+  const t = useTranslations("chat");
   // Stays null until the post-mount effect below resolves it — matches the
   // build-time static server output (no `window`), so first paint never
   // hydration-mismatches. See the same pattern/comment in
@@ -74,7 +75,10 @@ export default function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe: see comment above
     setContext(ctx);
-    setMessages(buildInitialMessages(ctx.cancerType));
+    setMessages(
+      buildInitialMessages(ctx.cancerType, t("greeting", { cancerType: ctx.cancerType }))
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- t is stable for the single active locale; re-running on every render would refetch buildInitialMessages needlessly
   }, [router]);
 
   useEffect(() => {
@@ -150,7 +154,7 @@ export default function ChatPage() {
           const safetyNetMessage: ChatMessage = {
             id: makeMessageId(),
             role: "assistant",
-            content: SAFETY_NET_MESSAGE,
+            content: t("safetyNetMessage"),
             timestamp: new Date().toISOString(),
           };
           setMessages((prev) => [...prev, safetyNetMessage]);
@@ -168,7 +172,7 @@ export default function ChatPage() {
       const fallback: ChatMessage = {
         id: makeMessageId(),
         role: "assistant",
-        content: FAIL_SAFE_MESSAGE,
+        content: t("failSafeMessage"),
         timestamp: new Date().toISOString(),
         grade: "AMBER",
       };
@@ -184,13 +188,13 @@ export default function ChatPage() {
 
   function handleStartNewConversation() {
     if (!context || messages.length <= 1) return;
-    const confirmed = window.confirm(
-      "Start a new conversation? This clears your chat history on this device."
-    );
+    const confirmed = window.confirm(t("startNewConversationConfirm"));
     if (!confirmed) return;
 
     clearConversation();
-    setMessages(buildInitialMessages(context.cancerType));
+    setMessages(
+      buildInitialMessages(context.cancerType, t("greeting", { cancerType: context.cancerType }))
+    );
     setActiveGuidelineId(null);
     setPendingFields({});
     setFollowUpRoundCount(0);
@@ -210,7 +214,7 @@ export default function ChatPage() {
             onClick={handleStartNewConversation}
             className="min-h-11 text-xs font-medium text-accent-text underline underline-offset-4"
           >
-            Start a new conversation
+            {t("startNewConversation")}
           </button>
         </div>
       )}

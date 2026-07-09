@@ -7,8 +7,10 @@ import type { EvaluationResult, PatientContext } from "@/lib/triage/types";
 import type { ChatApiResponse, PendingFields } from "@/types/api";
 
 const FOLLOW_UP_ROUND_CAP = 3;
+// EN: "Sorry, something went wrong on our end. To be safe, please contact
+// your 24-hour helpline to discuss your symptoms."
 const FAIL_SAFE_MESSAGE =
-  "Sorry, something went wrong on our end. To be safe, please contact your 24-hour helpline to discuss your symptoms.";
+  "מצטערים, משהו השתבש אצלנו. ליתר ביטחון, אנא פנה/י לקו החירום הפעיל 24 שעות ביממה כדי לדווח על התסמינים שלך.";
 
 function failSafeResponse(message: string): ChatApiResponse {
   return { type: "error_failsafe", assistantMessage: message, grade: "AMBER", redFlag: false };
@@ -81,8 +83,9 @@ function bridgeToNextQueued(
 
   const firstRequiredField = nextGuideline.screeningFields.find((f) => f.required);
   if (firstRequiredField) {
+    // EN: `You also mentioned ${displayName} — ${question}`
     return {
-      extraMessage: `You also mentioned ${nextGuideline.displayName.toLowerCase()} — ${firstRequiredField.question}`,
+      extraMessage: `הזכרת גם ${nextGuideline.displayName} — ${firstRequiredField.question}`,
       nextActiveGuidelineId: nextGuideline.id,
       remainingQueue: rest,
       topLevelEvaluation: primaryEvaluation,
@@ -93,8 +96,9 @@ function bridgeToNextQueued(
   // unconditionally, so evaluate it immediately rather than asking a
   // question that has no purpose.
   const secondaryEvaluation = evaluate({}, ctx, nextGuideline.id);
+  // EN: `About the ${displayName} you mentioned: ${actionText}`
   return {
-    extraMessage: `About the ${nextGuideline.displayName.toLowerCase()} you mentioned: ${secondaryEvaluation.actionText}`,
+    extraMessage: `לגבי ${nextGuideline.displayName} שהזכרת: ${secondaryEvaluation.actionText}`,
     nextActiveGuidelineId: null,
     remainingQueue: rest,
     topLevelEvaluation: moreSevereEvaluation(primaryEvaluation, secondaryEvaluation),
@@ -144,8 +148,10 @@ export async function POST(request: Request): Promise<Response> {
     json = await request.json();
   } catch {
     return Response.json(
+      // EN: "Sorry, we couldn't read that message. Please try again, or
+      // contact your 24-hour helpline if you're worried."
       failSafeResponse(
-        "Sorry, we couldn't read that message. Please try again, or contact your 24-hour helpline if you're worried."
+        "מצטערים, לא הצלחנו לקרוא את ההודעה הזו. אנא נסה/י שוב, או פנה/י לקו החירום הפעיל 24 שעות ביממה אם את/ה מודאג/ת."
       ),
       { status: 400 }
     );
@@ -154,8 +160,10 @@ export async function POST(request: Request): Promise<Response> {
   const parsed = chatApiRequestSchema.safeParse(json);
   if (!parsed.success) {
     return Response.json(
+      // EN: "Sorry, something about that message wasn't quite right. Please
+      // try again, or contact your 24-hour helpline if you're worried."
       failSafeResponse(
-        "Sorry, something about that message wasn't quite right. Please try again, or contact your 24-hour helpline if you're worried."
+        "מצטערים, היה משהו לא תקין בהודעה הזו. אנא נסה/י שוב, או פנה/י לקו החירום הפעיל 24 שעות ביממה אם את/ה מודאג/ת."
       ),
       { status: 400 }
     );
@@ -210,8 +218,8 @@ export async function POST(request: Request): Promise<Response> {
   if (hasMissingFields && !capExceeded && !extraction.possibleExcludedCondition) {
     const followUp: ChatApiResponse = {
       type: "follow_up",
-      assistantMessage:
-        extraction.followUpQuestion ?? "Can you tell me a bit more about that?",
+      // EN: "Can you tell me a bit more about that?"
+      assistantMessage: extraction.followUpQuestion ?? "תוכל/י לספר לי קצת יותר על זה?",
       activeGuidelineId: resolvedGuidelineId,
       pendingFields: mergedFields,
       followUpRoundCount: followUpRoundCount + 1,

@@ -9,11 +9,16 @@ import type { ToxicityGuideline } from "@/lib/triage/types";
  * algorithms — so patients on/recently treated with immunotherapy are
  * routed to the generic excluded-condition fallback instead of the
  * standard tiers below, per the app's scope boundary.
+ *
+ * Patient-facing strings translated to Hebrew — original English
+ * preserved per field below for clinician review against the source PDF.
  */
 export const dyspnoeaGuideline: ToxicityGuideline = {
   id: "dyspnoea",
-  displayName: "Dyspnoea / shortness of breath",
-  aliases: ["breathless", "short of breath", "can't catch my breath", "sob"],
+  // EN: "Dyspnoea / shortness of breath"
+  displayName: "קוצר נשימה",
+  // EN: ["breathless", "short of breath", "can't catch my breath", "sob"]
+  aliases: ["קשה לי לנשום", "נשימה קצרה", "לא מצליח לנשום"],
   boilerplateFooter: AO_TEAM_BOILERPLATE,
   alternatePathwayIf: {
     condition: (ctx) =>
@@ -23,8 +28,11 @@ export const dyspnoeaGuideline: ToxicityGuideline = {
   screeningFields: [
     {
       id: "dyspnoeaSeverity",
+      // EN: "Is the breathlessness new, and how much activity brings it
+      // on — none (baseline normal), only with moderate activity, with
+      // minimal activity, or even at rest?"
       question:
-        "Is the breathlessness new, and how much activity brings it on — none (baseline normal), only with moderate activity, with minimal activity, or even at rest?",
+        "האם קוצר הנשימה חדש, ומהי כמות הפעילות שגורמת לו — ללא (רגיל אצלך), רק במאמץ בינוני, במאמץ קל, או אפילו במנוחה?",
       type: "enum",
       enumOptions: ["none", "moderate_exertion", "minimal_exertion", "at_rest", "life_threatening"],
       required: true,
@@ -33,42 +41,60 @@ export const dyspnoeaGuideline: ToxicityGuideline = {
   grades: [
     {
       grade: "RED",
-      label: "Grade 4 (Red)",
-      description: "Life-threatening symptoms requiring urgent intervention.",
+      // EN: "Grade 4 (Red)"
+      label: "דרגה 4 (אדום)",
+      // EN: "Life-threatening symptoms requiring urgent intervention."
+      description: "תסמינים מסכני חיים המצריכים התערבות דחופה.",
       matches: (f) => f.dyspnoeaSeverity === "life_threatening",
-      action:
-        "This is a medical emergency. Call 999 or go to A&E now.",
+      // EN: "This is a medical emergency. Call 999 or go to A&E now."
+      action: "זהו מצב חירום רפואי. התקשר/י ל-999 או לך/י מיד למיון.",
     },
     {
       grade: "RED",
-      label: "Grade 3 (Red)",
-      description: "New onset dyspnoea at rest.",
+      // EN: "Grade 3 (Red)"
+      label: "דרגה 3 (אדום)",
+      // EN: "New onset dyspnoea at rest."
+      description: "קוצר נשימה חדש שמופיע גם במנוחה.",
       matches: (f) => f.dyspnoeaSeverity === "at_rest",
+      // EN: "Breathlessness at rest needs urgent assessment. Please go to A&E
+      // now or call your 24-hour helpline immediately."
       action:
-        "Breathlessness at rest needs urgent assessment. Please go to A&E now or call your 24-hour helpline immediately.",
+        "קוצר נשימה במנוחה מצריך הערכה דחופה. אנא לך/י מיד למיון או התקשר/י מיד לקו החירום הפעיל 24 שעות ביממה.",
     },
     {
       grade: "RED",
-      label: "Grade 2 (Red)",
-      description: "New onset dyspnoea with minimal exertion.",
+      // EN: "Grade 2 (Red)"
+      label: "דרגה 2 (אדום)",
+      // EN: "New onset dyspnoea with minimal exertion."
+      description: "קוצר נשימה חדש במאמץ קל.",
       matches: (f) => f.dyspnoeaSeverity === "minimal_exertion",
+      // EN: "This needs same-day assessment. Please call your 24-hour helpline
+      // now or go to A&E."
       action:
-        "This needs same-day assessment. Please call your 24-hour helpline now or go to A&E.",
+        "זה מצריך הערכה באותו יום. אנא התקשר/י עכשיו לקו החירום הפעיל 24 שעות ביממה או לך/י למיון.",
     },
     {
       grade: "AMBER",
-      label: "Grade 1 (Amber)",
-      description: "New onset dyspnoea with moderate exertion.",
+      // EN: "Grade 1 (Amber)"
+      label: "דרגה 1 (כתום)",
+      // EN: "New onset dyspnoea with moderate exertion."
+      description: "קוצר נשימה חדש במאמץ בינוני.",
       matches: (f) => f.dyspnoeaSeverity === "moderate_exertion",
+      // EN: "Please call your 24-hour helpline today to discuss this — it's
+      // important your team knows about new breathlessness, especially if
+      // you also have a cough, fever, or leg swelling."
       action:
-        "Please call your 24-hour helpline today to discuss this — it's important your team knows about new breathlessness, especially if you also have a cough, fever, or leg swelling.",
+        "אנא התקשר/י היום לקו החירום הפעיל 24 שעות ביממה כדי לדבר על כך — חשוב שהצוות המטפל שלך יידע על קוצר נשימה חדש, במיוחד אם יש לך גם שיעול, חום, או נפיחות ברגליים.",
     },
     {
       grade: "GREEN",
-      label: "None",
-      description: "No change in breathlessness from your normal baseline.",
+      // EN: "None"
+      label: "ללא",
+      // EN: "No change in breathlessness from your normal baseline."
+      description: "אין שינוי בקוצר הנשימה לעומת המצב הרגיל שלך.",
       matches: (f) => f.dyspnoeaSeverity === "none",
-      action: "No specific action needed for breathlessness right now.",
+      // EN: "No specific action needed for breathlessness right now."
+      action: "אין צורך בפעולה מיוחדת בנוגע לקוצר נשימה כרגע.",
     },
   ],
 };
