@@ -57,4 +57,5 @@ export const chatApiRequestSchema = z.object({
   activeGuidelineId: z.string().nullable(),
   pendingFields: z.record(z.string(), fieldValueSchema),
   followUpRoundCount: z.number().int().min(0),
+  pendingGuidelineQueue: z.array(z.string()),
 });

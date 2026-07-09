@@ -40,6 +40,7 @@ function baseRequestBody(overrides: Record<string, unknown> = {}) {
     activeGuidelineId: null,
     pendingFields: {},
     followUpRoundCount: 0,
+    pendingGuidelineQueue: [],
     ...overrides,
   };
 }
@@ -207,5 +208,125 @@ describe("/api/chat route", () => {
       // Amber itself, rather than the route looping forever.
       expect(body.grade).toBe("AMBER");
     }
+  });
+
+  describe("multi-symptom investigation", () => {
+    it("bridges into a queued co-mentioned guideline that has required fields, as a deterministic question", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          extractedFields: { vomitingEpisodesLast24h: 2 },
+          multipleSymptomsDetected: ["mucositis"],
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "GREEN", message: "phrased vomiting message" });
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({
+            message: "sick twice today and my mouth is sore",
+            activeGuidelineId: "vomiting",
+          })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("GREEN");
+        expect(body.nextActiveGuidelineId).toBe("mucositis");
+        expect(body.pendingGuidelineQueue).toEqual([]);
+        expect(body.assistantMessage).toContain("phrased vomiting message");
+        expect(body.assistantMessage.toLowerCase()).toContain("mouth");
+      }
+    });
+
+    it("evaluates a queued guideline with no required fields immediately, and escalates the top-level grade if it's more severe", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          extractedFields: { vomitingEpisodesLast24h: 1 },
+          multipleSymptomsDetected: ["chest_pain"],
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "GREEN", message: "phrased vomiting message" });
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({
+            message: "only sick once but I also have some chest pain",
+            activeGuidelineId: "vomiting",
+          })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        // chest_pain grades Red unconditionally -> must win over the
+        // primary complaint's Green, even though vomiting was mentioned first.
+        expect(body.grade).toBe("RED");
+        expect(body.redFlag).toBe(true);
+        expect(body.guidelineId).toBe("chest_pain");
+        expect(body.nextActiveGuidelineId).toBeNull();
+        expect(body.assistantMessage).toContain("chest pain");
+      }
+    });
+
+    it("discards the queue entirely when the primary complaint itself grades Red", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "diarrhoea",
+          extractedFields: { stoolsPerDayOverBaseline: 8, hasBloodInStool: false },
+          multipleSymptomsDetected: ["mucositis"],
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "RED", message: "urgent diarrhoea message" });
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({
+            message: "diarrhoea 8 times and my mouth is a bit sore too",
+            activeGuidelineId: "diarrhoea",
+          })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("RED");
+        expect(body.nextActiveGuidelineId).toBeNull();
+        expect(body.pendingGuidelineQueue).toEqual([]);
+        expect(body.assistantMessage).not.toContain("mouth");
+      }
+    });
+
+    it("accumulates multipleSymptomsDetected into the queue across follow_up turns", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          missingRequiredFields: ["vomitingEpisodesLast24h"],
+          followUpQuestion: "How many times have you been sick?",
+          multipleSymptomsDetected: ["mucositis"],
+        })
+      );
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({
+            message: "I've been sick and my mouth hurts",
+            activeGuidelineId: "vomiting",
+            pendingGuidelineQueue: ["rash"],
+          })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("follow_up");
+      if (body.type === "follow_up") {
+        expect(body.pendingGuidelineQueue).toEqual(["rash", "mucositis"]);
+      }
+    });
   });
 });

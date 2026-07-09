@@ -17,6 +17,17 @@ function worstFirst(grades: GradeCriterion[]): GradeCriterion[] {
   return [...grades].sort((a, b) => SEVERITY_ORDER[b.grade] - SEVERITY_ORDER[a.grade]);
 }
 
+/**
+ * Picks the more severe of two evaluations — used when a turn grades more
+ * than one guideline at once (e.g. bridging into a queued co-mentioned
+ * guideline that needs no follow-up questions, see /api/chat's
+ * multi-symptom handling). A Red result must never be shadowed by an
+ * Amber/Green one reported alongside it in the same turn.
+ */
+export function moreSevereEvaluation(a: EvaluationResult, b: EvaluationResult): EvaluationResult {
+  return SEVERITY_ORDER[b.grade] > SEVERITY_ORDER[a.grade] ? b : a;
+}
+
 const FAIL_SAFE_ACTION =
   "We couldn't confidently match this to a specific guideline, so to be safe: please contact your 24-hour oncology helpline to talk through what you're experiencing.";
 
