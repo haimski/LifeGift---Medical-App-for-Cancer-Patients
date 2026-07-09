@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import { useTranslations } from "next-intl";
 
 interface MessageInputProps {
   onSend: (content: string) => void;
@@ -8,6 +9,7 @@ interface MessageInputProps {
 }
 
 export function MessageInput({ onSend, disabled }: MessageInputProps) {
+  const t = useTranslations("chat");
   const [value, setValue] = useState("");
 
   function handleSubmit(event: FormEvent) {
@@ -34,16 +36,19 @@ export function MessageInput({ onSend, disabled }: MessageInputProps) {
         }}
         disabled={disabled}
         rows={1}
-        placeholder="Tell us what's going on..."
+        placeholder={t("inputPlaceholder")}
         className="min-h-11 flex-1 resize-none rounded-xl border border-azure-200 bg-background px-3.5 py-2.5 text-sm text-foreground outline-none focus:border-azure-500 disabled:opacity-50"
       />
       <button
         type="submit"
         disabled={disabled || value.trim().length === 0}
         className="flex min-h-11 min-w-11 items-center justify-center rounded-xl bg-azure-600 text-white transition-colors hover:bg-azure-700 disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label="Send message"
+        aria-label={t("sendLabel")}
       >
-        <span aria-hidden>➤</span>
+        {/* Send arrow always points toward reading-forward — mirrors under ltr: if English is ever revived */}
+        <span aria-hidden className="inline-block rtl:-scale-x-100">
+          ➤
+        </span>
       </button>
     </form>
   );

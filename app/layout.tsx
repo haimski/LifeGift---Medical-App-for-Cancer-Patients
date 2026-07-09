@@ -1,39 +1,42 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Heebo } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
+import { getMessages } from "next-intl/server";
 import { SafetyHeader } from "@/components/layout/SafetyHeader";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Geist (the previous font) has no Hebrew glyphs — Heebo was designed for
+// Hebrew and covers Latin too, so numbers/phone numbers still render fine.
+const heebo = Heebo({
+  variable: "--font-heebo",
+  subsets: ["hebrew", "latin"],
 });
 
 export const metadata: Metadata = {
   title: "LifeGift",
-  description:
-    "A calm place to check in about symptoms during cancer treatment.",
+  description: "מקום שקט לבירור תסמינים במהלך הטיפול בסרטן.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const messages = await getMessages();
+
   return (
     <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      lang="he"
+      dir="rtl"
+      className={`${heebo.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-background text-foreground">
-        <SafetyHeader />
-        <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
-          {children}
-        </div>
+        <NextIntlClientProvider messages={messages}>
+          <SafetyHeader />
+          <div className="mx-auto flex w-full max-w-md flex-1 flex-col">
+            {children}
+          </div>
+        </NextIntlClientProvider>
       </body>
     </html>
   );

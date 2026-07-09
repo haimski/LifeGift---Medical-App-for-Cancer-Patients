@@ -237,7 +237,7 @@ describe("/api/chat route", () => {
         expect(body.nextActiveGuidelineId).toBe("mucositis");
         expect(body.pendingGuidelineQueue).toEqual([]);
         expect(body.assistantMessage).toContain("phrased vomiting message");
-        expect(body.assistantMessage.toLowerCase()).toContain("mouth");
+        expect(body.assistantMessage).toContain("רירית");
       }
     });
 
@@ -269,7 +269,7 @@ describe("/api/chat route", () => {
         expect(body.redFlag).toBe(true);
         expect(body.guidelineId).toBe("chest_pain");
         expect(body.nextActiveGuidelineId).toBeNull();
-        expect(body.assistantMessage).toContain("chest pain");
+        expect(body.assistantMessage).toContain("כאב בחזה");
       }
     });
 
@@ -298,7 +298,7 @@ describe("/api/chat route", () => {
         expect(body.grade).toBe("RED");
         expect(body.nextActiveGuidelineId).toBeNull();
         expect(body.pendingGuidelineQueue).toEqual([]);
-        expect(body.assistantMessage).not.toContain("mouth");
+        expect(body.assistantMessage).not.toContain("רירית");
       }
     });
 

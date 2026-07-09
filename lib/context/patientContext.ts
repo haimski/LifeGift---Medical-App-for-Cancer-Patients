@@ -6,15 +6,6 @@ export type TreatmentType =
   | "combination"
   | "not_on_active_treatment";
 
-export const TREATMENT_TYPE_LABELS: Record<TreatmentType, string> = {
-  chemotherapy_sact: "Chemotherapy (SACT)",
-  immunotherapy: "Immunotherapy",
-  radiotherapy: "Radiotherapy",
-  targeted_therapy: "Targeted therapy",
-  combination: "A combination of treatments",
-  not_on_active_treatment: "Not currently on active treatment",
-};
-
 /** Full patient context — required before the chat screen can be used. */
 export interface PatientContext {
   cancerType: string;

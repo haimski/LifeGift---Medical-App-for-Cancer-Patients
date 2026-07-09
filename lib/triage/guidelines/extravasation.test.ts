@@ -13,6 +13,6 @@ describe("extravasation guideline", () => {
   it("grades any suspected extravasation as an immediate Amber alert", () => {
     const result = evaluate({}, ctx, "extravasation");
     expect(result.grade).toBe("AMBER");
-    expect(result.actionText).toMatch(/stop it now/i);
+    expect(result.actionText).toMatch(/הפסק/);
   });
 });

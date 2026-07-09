@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/Button";
 import {
   HelplineNumberInput,
@@ -14,6 +15,7 @@ import {
 
 export default function OnboardingHelplinePage() {
   const router = useRouter();
+  const t = useTranslations("onboarding.helpline");
   const [helplineNumber, setHelplineNumber] = useState("");
   // null = "not checked yet" — renders nothing, matching the build-time
   // static server output (no `window`/localStorage). Only after mount do
@@ -56,11 +58,9 @@ export default function OnboardingHelplinePage() {
     <main className="flex flex-1 flex-col gap-6 px-5 py-8">
       <div>
         <h1 className="text-xl font-semibold tracking-tight text-heading">
-          One last thing
+          {t("title")}
         </h1>
-        <p className="mt-1 text-sm text-foreground-muted">
-          So the right number is always within reach when you need it.
-        </p>
+        <p className="mt-1 text-sm text-foreground-muted">{t("subtitle")}</p>
       </div>
 
       <HelplineNumberInput
@@ -69,7 +69,7 @@ export default function OnboardingHelplinePage() {
       />
 
       <Button onClick={handleContinue} disabled={!canContinue}>
-        Start chatting
+        {t("startChatting")}
       </Button>
     </main>
   );

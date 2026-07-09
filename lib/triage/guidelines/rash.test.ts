@@ -37,7 +37,7 @@ describe("rash guideline", () => {
       "rash"
     );
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toMatch(/Grade 4/);
+    expect(result.gradeLabel).toMatch(/דרגה 4/);
   });
 
   it("routes immunotherapy patients to the excluded-condition fallback", () => {

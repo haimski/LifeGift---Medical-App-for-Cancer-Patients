@@ -1,0 +1,90 @@
+{
+  "common": {
+    "continue": "Continue",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "onboarding": {
+    "welcome": {
+      "title": "Welcome to LifeGift",
+      "subtitle": "A calm place to check in about symptoms during your cancer treatment.",
+      "description": "LifeGift can help you understand whether a symptom is safe to watch, worth calling your care team about, or needs urgent attention — based on the same guidance your 24-hour oncology helpline uses.",
+      "emergencyNotice": "This does not replace emergency care. If you think this is a medical emergency, call 999 now.",
+      "noAccountNeeded": "No account or sign-in needed to get started."
+    },
+    "cancerTreatment": {
+      "title": "A bit about your treatment",
+      "subtitle": "This helps us give advice that fits your situation. You can change this later.",
+      "recentTreatmentQuestion": "Have you had any cancer treatment (including tablets) in the last 6 weeks?"
+    },
+    "helpline": {
+      "title": "One last thing",
+      "subtitle": "So the right number is always within reach when you need it.",
+      "startChatting": "Start chatting"
+    },
+    "cancerTypePicker": {
+      "question": "What type of cancer are you being treated for?",
+      "other": "Other",
+      "otherPlaceholder": "Tell us the type",
+      "types": {
+        "breast": "Breast",
+        "lung": "Lung",
+        "bowel": "Bowel / colorectal",
+        "prostate": "Prostate",
+        "lymphoma": "Lymphoma",
+        "leukaemia": "Leukaemia",
+        "myeloma": "Myeloma",
+        "ovarian": "Ovarian",
+        "pancreatic": "Pancreatic",
+        "skin": "Skin / melanoma",
+        "headNeck": "Head and neck",
+        "bladder": "Bladder",
+        "kidney": "Kidney"
+      }
+    },
+    "treatmentTypePicker": {
+      "question": "What treatment are you currently receiving?"
+    },
+    "helplineInput": {
+      "question": "What's your 24-hour oncology helpline number?",
+      "hint": "This is on your treatment alert card. We'll keep it one tap away at the top of every screen.",
+      "placeholder": "e.g. 01234 567890",
+      "invalid": "That doesn't look like a phone number yet.",
+      "previewPrefix": "Preview: tap to call"
+    }
+  },
+  "treatmentTypes": {
+    "chemotherapy_sact": "Chemotherapy (SACT)",
+    "immunotherapy": "Immunotherapy",
+    "radiotherapy": "Radiotherapy",
+    "targeted_therapy": "Targeted therapy",
+    "combination": "A combination of treatments",
+    "not_on_active_treatment": "Not currently on active treatment"
+  },
+  "chat": {
+    "greeting": "Hi! I can see you're being treated for {cancerType} cancer. Tell me what's going on and I'll help you figure out the next step.",
+    "failSafeMessage": "Sorry, something went wrong on our end. To be safe, please contact your 24-hour helpline to discuss your symptoms.",
+    "safetyNetMessage": "Before we finish — is there anything else going on, like a temperature, nausea, or unusual bleeding? If so, just tell me.",
+    "startNewConversation": "Start a new conversation",
+    "startNewConversationConfirm": "Start a new conversation? This clears your chat history on this device.",
+    "inputPlaceholder": "Tell us what's going on...",
+    "sendLabel": "Send message"
+  },
+  "gradeBadge": {
+    "green": "Green — no cause for concern",
+    "amber": "Amber — contact your team",
+    "red": "Red — urgent"
+  },
+  "redFlag": {
+    "title": "Go to A&E now",
+    "body": "Based on what you've told us, this needs urgent medical attention right away — please don't wait to see if it improves.",
+    "call999": "Call 999",
+    "callHelpline": "Call your 24-hour helpline",
+    "acknowledge": "I understand"
+  },
+  "safetyHeader": {
+    "helplineSetUp": "24-hour helpline",
+    "helplineNotSetUp": "Helpline not set up",
+    "emergencyLink": "Life-threatening? Call 999"
+  }
+}

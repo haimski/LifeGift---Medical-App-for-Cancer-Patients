@@ -31,7 +31,7 @@ describe("diarrhoea guideline (non-immunotherapy)", () => {
       "diarrhoea"
     );
     expect(result.grade).toBe("AMBER");
-    expect(result.gradeLabel).toBe("Grade 1 (Amber)");
+    expect(result.gradeLabel).toBe("דרגה 1 (כתום)");
   });
 
   it("grades 4-6 episodes as Amber (Grade 2)", () => {
@@ -41,7 +41,7 @@ describe("diarrhoea guideline (non-immunotherapy)", () => {
       "diarrhoea"
     );
     expect(result.grade).toBe("AMBER");
-    expect(result.gradeLabel).toBe("Grade 2 (Amber)");
+    expect(result.gradeLabel).toBe("דרגה 2 (כתום)");
   });
 
   it("grades 8 episodes a day as Red (Grade 3)", () => {
@@ -51,7 +51,7 @@ describe("diarrhoea guideline (non-immunotherapy)", () => {
       "diarrhoea"
     );
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toBe("Grade 3 (Red)");
+    expect(result.gradeLabel).toBe("דרגה 3 (אדום)");
   });
 
   it("grades 12 episodes a day as Red (Grade 4)", () => {
@@ -61,7 +61,7 @@ describe("diarrhoea guideline (non-immunotherapy)", () => {
       "diarrhoea"
     );
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toBe("Grade 4 (Red)");
+    expect(result.gradeLabel).toBe("דרגה 4 (אדום)");
   });
 
   it("escalates a Grade 2 count to Red if it has persisted >24h despite medication", () => {
@@ -75,7 +75,7 @@ describe("diarrhoea guideline (non-immunotherapy)", () => {
       "diarrhoea"
     );
     expect(result.grade).toBe("RED");
-    expect(result.escalationReason).toMatch(/24 hours/);
+    expect(result.escalationReason).toMatch(/24 שעות/);
   });
 
   it("treats any blood in stool as Red regardless of episode count", () => {

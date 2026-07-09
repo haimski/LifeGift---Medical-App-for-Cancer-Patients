@@ -44,6 +44,6 @@ describe("hypercalcaemia guideline", () => {
       "hypercalcaemia"
     );
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toMatch(/seizure/i);
+    expect(result.gradeLabel).toMatch(/התקף/);
   });
 });

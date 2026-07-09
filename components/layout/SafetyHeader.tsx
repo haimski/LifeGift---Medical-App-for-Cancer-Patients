@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { toTelHref, EMERGENCY_NUMBER } from "@/lib/utils/phone";
 import { getPatientContext } from "@/lib/context/patientContext";
 
-const PLACEHOLDER = "Not set up yet";
+const PLACEHOLDER = "";
 
 /**
  * Persistent, LLM-independent safety chrome. Mounted once in the root layout
@@ -22,6 +23,7 @@ const PLACEHOLDER = "Not set up yet";
  */
 export function SafetyHeader() {
   const pathname = usePathname();
+  const t = useTranslations("safetyHeader");
   const [helplineNumber, setHelplineNumber] = useState(PLACEHOLDER);
 
   useEffect(() => {
@@ -45,14 +47,14 @@ export function SafetyHeader() {
             className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-azure-200 bg-azure-50 px-3 text-xs font-medium text-azure-700 transition-colors hover:bg-azure-100 aria-disabled:pointer-events-none aria-disabled:opacity-60"
           >
             <span aria-hidden>📞</span>
-            {hasHelpline ? "24-hour helpline" : "Helpline not set up"}
+            {hasHelpline ? t("helplineSetUp") : t("helplineNotSetUp")}
           </a>
           <a
             href={toTelHref(EMERGENCY_NUMBER)}
             className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-rag-red bg-rag-red-bg px-3 text-xs font-semibold text-rag-red-badge-text transition-colors hover:brightness-95"
           >
             <span aria-hidden>🚨</span>
-            Life-threatening? Call 999
+            {t("emergencyLink")}
           </a>
         </div>
       </div>

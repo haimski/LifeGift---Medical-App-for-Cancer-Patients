@@ -50,6 +50,6 @@ describe("bleeding/bruising guideline", () => {
   it("grades severe uncontrolled bleeding as Red (life-threatening tier)", () => {
     const result = evaluate({ bleedingSeverity: "severe_uncontrolled" }, ctx, "bleeding_bruising");
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toMatch(/Grade 4/);
+    expect(result.gradeLabel).toMatch(/דרגה 4/);
   });
 });

@@ -48,6 +48,6 @@ describe("MSCC / back pain red-flag guideline", () => {
       "mscc_back_pain"
     );
     expect(result.grade).toBe("RED");
-    expect(result.gradeLabel).toMatch(/Grade 4/);
+    expect(result.gradeLabel).toMatch(/דרגה 4/);
   });
 });
