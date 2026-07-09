@@ -20,6 +20,8 @@ import type { ChatApiRequest, ChatApiResponse, ChatMessage, PendingFields } from
 const MAX_HISTORY_SENT = 20;
 const FAIL_SAFE_MESSAGE =
   "Sorry, something went wrong on our end. To be safe, please contact your 24-hour helpline to discuss your symptoms.";
+const SAFETY_NET_MESSAGE =
+  "Before we finish — is there anything else going on, like a temperature, nausea, or unusual bleeding? If so, just tell me.";
 
 function buildInitialMessages(cancerType: string): ChatMessage[] {
   const existing = getConversation();
@@ -50,6 +52,14 @@ export default function ChatPage() {
   const [activeGuidelineId, setActiveGuidelineId] = useState<string | null>(null);
   const [pendingFields, setPendingFields] = useState<PendingFields>({});
   const [followUpRoundCount, setFollowUpRoundCount] = useState(0);
+
+  // Other guideline ids the patient mentioned alongside the current
+  // complaint, still waiting to be addressed — see route.ts's
+  // bridgeToNextQueued and the plan's "Multi-symptom investigation".
+  const [pendingGuidelineQueue, setPendingGuidelineQueue] = useState<string[]>([]);
+  // Client-side only, never sent to the server: whether the once-per-
+  // session safety-net question has already been shown.
+  const [hasShownSafetyNet, setHasShownSafetyNet] = useState(false);
 
   // Driven strictly by the API response's own `redFlag` field (computed by
   // the deterministic rules engine) — never by anything parsed from
@@ -92,6 +102,7 @@ export default function ChatPage() {
         activeGuidelineId,
         pendingFields,
         followUpRoundCount,
+        pendingGuidelineQueue,
       };
 
       const res = await fetch("/api/chat", {
@@ -114,16 +125,43 @@ export default function ChatPage() {
         setActiveGuidelineId(data.activeGuidelineId);
         setPendingFields(data.pendingFields);
         setFollowUpRoundCount(data.followUpRoundCount);
+        setPendingGuidelineQueue(data.pendingGuidelineQueue);
+      } else if (data.type === "graded") {
+        // Bridging into a queued co-mentioned guideline reuses the same
+        // follow_up-style state (activeGuidelineId set, fields empty) so
+        // the next patient message is understood in that context, without
+        // needing a fresh extraction call just to re-identify it.
+        setActiveGuidelineId(data.nextActiveGuidelineId);
+        setPendingFields({});
+        setFollowUpRoundCount(0);
+        setPendingGuidelineQueue(data.pendingGuidelineQueue);
+
+        if (data.redFlag) {
+          setRedFlag({ show: true, helplineNumber: data.helplineNumber });
+        } else if (
+          data.pendingGuidelineQueue.length === 0 &&
+          !data.nextActiveGuidelineId &&
+          !hasShownSafetyNet
+        ) {
+          // Once-per-session safety net (client-side only, never sent to
+          // the server) — asked only once nothing is queued and this is
+          // the first Green/Amber grade this session, never after Red.
+          setHasShownSafetyNet(true);
+          const safetyNetMessage: ChatMessage = {
+            id: makeMessageId(),
+            role: "assistant",
+            content: SAFETY_NET_MESSAGE,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, safetyNetMessage]);
+        }
       } else {
-        // graded or error_failsafe: this complaint is resolved (or we've
-        // fail-safed on it) — start fresh for whatever the patient says next.
+        // error_failsafe: fail-safed on this complaint — start fresh for
+        // whatever the patient says next.
         setActiveGuidelineId(null);
         setPendingFields({});
         setFollowUpRoundCount(0);
-      }
-
-      if (data.type === "graded" && data.redFlag) {
-        setRedFlag({ show: true, helplineNumber: data.helplineNumber });
+        setPendingGuidelineQueue([]);
       }
     } catch (err) {
       console.error("Chat request failed", err);
@@ -138,6 +176,7 @@ export default function ChatPage() {
       setActiveGuidelineId(null);
       setPendingFields({});
       setFollowUpRoundCount(0);
+      setPendingGuidelineQueue([]);
     } finally {
       setIsAssistantTyping(false);
     }
@@ -155,6 +194,8 @@ export default function ChatPage() {
     setActiveGuidelineId(null);
     setPendingFields({});
     setFollowUpRoundCount(0);
+    setPendingGuidelineQueue([]);
+    setHasShownSafetyNet(false);
     setRedFlag({ show: false, helplineNumber: "" });
   }
 

@@ -13,6 +13,9 @@ export interface ChatMessage {
 /** Fields extracted from patient free text, keyed by ScreeningField id. */
 export type PendingFields = Record<string, string | number | boolean | null>;
 
+/** Other guideline ids mentioned alongside the current complaint, still waiting to be addressed. */
+export type PendingGuidelineQueue = string[];
+
 export interface ChatApiRequest {
   patientContext: PatientContext;
   /** Bounded recent history — the client truncates before sending, see conversationStore.ts. */
@@ -22,6 +25,7 @@ export interface ChatApiRequest {
   pendingFields: PendingFields;
   /** How many follow_up turns have already happened for the current complaint. */
   followUpRoundCount: number;
+  pendingGuidelineQueue: PendingGuidelineQueue;
 }
 
 export type ChatApiResponse =
@@ -31,6 +35,7 @@ export type ChatApiResponse =
       activeGuidelineId: string | null;
       pendingFields: PendingFields;
       followUpRoundCount: number;
+      pendingGuidelineQueue: PendingGuidelineQueue;
     }
   | {
       type: "graded";
@@ -40,6 +45,9 @@ export type ChatApiResponse =
       actionSummary: string;
       redFlag: boolean;
       helplineNumber: string;
+      /** Set when bridging into a queued co-mentioned guideline that needs a follow-up question — the client should treat this as activeGuidelineId (with empty pendingFields) on the next turn instead of starting fresh. */
+      nextActiveGuidelineId: string | null;
+      pendingGuidelineQueue: PendingGuidelineQueue;
     }
   | {
       type: "error_failsafe";
