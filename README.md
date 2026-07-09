@@ -28,3 +28,11 @@ npm run test   # Vitest — currently covers lib/triage/** (the rules engine)
 ```
 
 Next.js 16 is newer than most training data know about — check `node_modules/next/dist/docs/` before assuming an API works the way it used to (async `params`/`searchParams`, `middleware.ts` → `proxy.ts`, etc.)
+
+## Environment variables
+
+Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required — the extraction/phrasing steps in `lib/llm/` throw without it, which the route handles as a safe `error_failsafe`, never a crash). `LIFEGIFT_EXTRACTION_MODEL`/`LIFEGIFT_PHRASING_MODEL` are optional overrides of the default Haiku/Sonnet models.
+
+## Deployment
+
+Deployed to Vercel via GitHub's auto-deploy-on-push-to-main integration — every `git push origin main` redeploys automatically, no manual step. The same env vars from `.env.example` need adding to the Vercel project's settings separately; they don't sync from `.env.local`. `package.json`'s `engines.node` pins a Next-16-compatible Node runtime.
