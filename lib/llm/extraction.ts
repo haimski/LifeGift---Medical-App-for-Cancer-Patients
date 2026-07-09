@@ -48,6 +48,11 @@ const EXTRACTION_TOOL: Anthropic.Tool = {
         description:
           "Guideline ids of any OTHER known guidelines also plausibly mentioned in this same message.",
       },
+      mentionsPhysicalSymptom: {
+        type: "boolean",
+        description:
+          "True if the message alludes to ANY bodily symptom, side effect, or health concern, even vaguely or unclearly. False only for messages with no physical-symptom content at all (greetings, thanks, questions about the app, small talk, venting with no physical complaint). If in doubt, set this to true.",
+      },
     },
     required: [
       "matchedGuidelineId",
@@ -56,6 +61,7 @@ const EXTRACTION_TOOL: Anthropic.Tool = {
       "missingRequiredFields",
       "followUpQuestion",
       "multipleSymptomsDetected",
+      "mentionsPhysicalSymptom",
     ],
   },
 };
@@ -119,7 +125,8 @@ Rules:
 3. ALWAYS also try to extract temperatureC, feelsGenerallyUnwell, and hasRigorsOrShivering if mentioned, regardless of which guideline matched.
 4. If a REQUIRED field for the matched guideline is still unknown, list it in missingRequiredFields and phrase ONE short, warm followUpQuestion about it (prefer the guideline's own question wording above). Ask about only one missing field at a time.
 5. If nothing required is missing (or nothing matched), set followUpQuestion to null.
-6. If the message also plausibly mentions a different known guideline, list its id in multipleSymptomsDetected — don't try to grade it this turn.`;
+6. If the message also plausibly mentions a different known guideline, list its id in multipleSymptomsDetected — don't try to grade it this turn.
+7. Set mentionsPhysicalSymptom to true if the message alludes to ANY bodily symptom, side effect, or health concern — even if it doesn't match a known guideline and even if it's vague or unclear. Only set it to false for messages with no physical-symptom content at all, e.g. greetings, thanks, questions about how this chat works, or general small talk. Bias toward true when uncertain — a separate step handles the false case with a friendlier, non-clinical reply, so getting this wrong toward false risks a real symptom being treated as small talk.`;
 }
 
 function toAnthropicMessages(

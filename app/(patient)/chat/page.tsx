@@ -141,11 +141,16 @@ export default function ChatPage() {
         role: "assistant",
         content: data.assistantMessage,
         timestamp: new Date().toISOString(),
-        grade: data.type !== "follow_up" ? data.grade : undefined,
+        grade:
+          data.type === "graded" || data.type === "error_failsafe" ? data.grade : undefined,
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      if (data.type === "follow_up") {
+      if (data.type === "follow_up" || data.type === "conversational") {
+        // conversational is a no-symptom reply (greeting, thanks, small
+        // talk) — never graded, so this just syncs state (a no-op here,
+        // since this branch only ever fires with no questionnaire already
+        // in progress — see route.ts).
         setActiveGuidelineId(data.activeGuidelineId);
         setPendingFields(data.pendingFields);
         setFollowUpRoundCount(data.followUpRoundCount);

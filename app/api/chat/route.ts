@@ -1,4 +1,5 @@
 import { recordChatTurn } from "@/lib/db/sessions";
+import { callConversationalReply } from "@/lib/llm/conversation";
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
 import { chatApiRequestSchema } from "@/lib/llm/schemas";
@@ -12,6 +13,12 @@ const FOLLOW_UP_ROUND_CAP = 3;
 // your 24-hour helpline to discuss your symptoms."
 const FAIL_SAFE_MESSAGE =
   "מצטערים, משהו השתבש אצלנו. ליתר ביטחון, אנא פנה/י לקו החירום הפעיל 24 שעות ביממה כדי לדווח על התסמינים שלך.";
+// EN: "Sorry, I couldn't quite process that just now. Feel free to tell me
+// if there's anything physical bothering you." — deliberately gentle, not
+// the clinical fail-safe text above: nothing concerning is actually
+// happening on this path, so it shouldn't sound like one.
+const CONVERSATION_FALLBACK_MESSAGE =
+  "מצטערים, לא הצלחתי להבין את זה כרגע. אשמח לשמוע אם יש משהו גופני שמטריד אותך.";
 
 function failSafeResponse(message: string): ChatApiResponse {
   return { type: "error_failsafe", assistantMessage: message, grade: "AMBER", redFlag: false };
@@ -246,6 +253,37 @@ export async function POST(request: Request): Promise<Response> {
     const response = await buildGradedResponse(overrideResult, patientContext, bridge);
     await persistTurn(sessionId, patientContext, message, response, bridge.topLevelEvaluation);
     return Response.json(response);
+  }
+
+  // A non-symptom message (greeting, thanks, small talk, app questions) —
+  // only on a fresh turn with no questionnaire already in progress, so an
+  // off-topic remark mid-assessment still gets related back to the still-
+  // missing fields exactly as before, never sidetracked into small talk.
+  // Never touches the rules engine or produces a grade.
+  if (
+    !extraction.mentionsPhysicalSymptom &&
+    !extraction.matchedGuidelineId &&
+    activeGuidelineId === null &&
+    mergedQueue.length === 0
+  ) {
+    let assistantMessage = CONVERSATION_FALLBACK_MESSAGE;
+    try {
+      const reply = await callConversationalReply(message, conversationHistory, patientContext);
+      assistantMessage = reply.message;
+    } catch (err) {
+      console.error("Conversational reply call failed; using gentle fallback", err);
+    }
+
+    const conversational: ChatApiResponse = {
+      type: "conversational",
+      assistantMessage,
+      activeGuidelineId: null,
+      pendingFields: {},
+      followUpRoundCount,
+      pendingGuidelineQueue: mergedQueue,
+    };
+    await persistTurn(sessionId, patientContext, message, conversational);
+    return Response.json(conversational);
   }
 
   const hasMissingFields = extraction.missingRequiredFields.length > 0;
