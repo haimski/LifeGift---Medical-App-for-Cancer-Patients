@@ -6,12 +6,16 @@ vi.mock("@/lib/llm/extraction", () => ({
 vi.mock("@/lib/llm/phrasing", () => ({
   callPhrasing: vi.fn(),
 }));
+vi.mock("@/lib/llm/conversation", () => ({
+  callConversationalReply: vi.fn(),
+}));
 vi.mock("@/lib/db/sessions", () => ({
   recordChatTurn: vi.fn(),
 }));
 
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
+import { callConversationalReply } from "@/lib/llm/conversation";
 import { recordChatTurn } from "@/lib/db/sessions";
 import type { ExtractionResult } from "@/lib/llm/schemas";
 import type { PatientContext } from "@/lib/triage/types";
@@ -20,6 +24,7 @@ import { POST } from "@/app/api/chat/route";
 
 const mockedExtraction = vi.mocked(callExtraction);
 const mockedPhrasing = vi.mocked(callPhrasing);
+const mockedConversationalReply = vi.mocked(callConversationalReply);
 const mockedRecordChatTurn = vi.mocked(recordChatTurn);
 
 const patientContext: PatientContext = {
@@ -59,6 +64,10 @@ function extraction(overrides: Partial<ExtractionResult> = {}): ExtractionResult
     missingRequiredFields: [],
     followUpQuestion: null,
     multipleSymptomsDetected: [],
+    // Every existing test here is exercising the symptom-reporting flow, so
+    // default this to true — only the new conversational tests below
+    // override it to false.
+    mentionsPhysicalSymptom: true,
     ...overrides,
   };
 }
@@ -414,6 +423,109 @@ describe("/api/chat route", () => {
       if (body.type === "graded") {
         expect(body.grade).toBe("RED");
         expect(body.redFlag).toBe(true);
+      }
+    });
+  });
+
+  describe("conversational replies (non-symptom messages)", () => {
+    it("returns a conversational reply for a pure greeting, never touching the rules engine", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({ mentionsPhysicalSymptom: false, matchedGuidelineId: null })
+      );
+      mockedConversationalReply.mockResolvedValue({ message: "היי! מה שלומך היום?" });
+
+      const res = await POST(makeRequest(baseRequestBody({ message: "hi there" })));
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("conversational");
+      if (body.type === "conversational") {
+        expect(body.assistantMessage).toBe("היי! מה שלומך היום?");
+        expect(body.activeGuidelineId).toBeNull();
+        expect(body.pendingGuidelineQueue).toEqual([]);
+      }
+      expect(mockedPhrasing).not.toHaveBeenCalled();
+    });
+
+    it("still follows the normal follow_up flow for a greeting-like message sent mid-questionnaire", async () => {
+      // activeGuidelineId is already set (a questionnaire is in progress) —
+      // the conversational branch must not fire here even though this
+      // turn's extraction also says mentionsPhysicalSymptom: false.
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          mentionsPhysicalSymptom: false,
+          matchedGuidelineId: null,
+          missingRequiredFields: ["vomitingEpisodesLast24h"],
+          followUpQuestion: "How many times have you been sick today?",
+        })
+      );
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({ message: "haha sorry, one sec", activeGuidelineId: "vomiting" })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("follow_up");
+      expect(mockedConversationalReply).not.toHaveBeenCalled();
+    });
+
+    it("still grades/fails-safe as normal when mentionsPhysicalSymptom is true, even with no guideline match", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({ mentionsPhysicalSymptom: true, matchedGuidelineId: null })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "AMBER", message: "fail-safe phrased message" });
+
+      const res = await POST(
+        makeRequest(baseRequestBody({ message: "something feels off but I can't describe it" }))
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("AMBER");
+      }
+      expect(mockedConversationalReply).not.toHaveBeenCalled();
+    });
+
+    it("still fires the neutropenic sepsis override even for a conversational-leaning message", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          mentionsPhysicalSymptom: false,
+          matchedGuidelineId: null,
+          extractedFields: { feelsGenerallyUnwell: true },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "RED", message: "urgent override message" });
+
+      const res = await POST(
+        makeRequest(
+          baseRequestBody({ message: "hi, just feeling really unwell since chemo last week" })
+        )
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("RED");
+        expect(body.guidelineId).toBe("neutropenic_sepsis_override");
+      }
+      expect(mockedConversationalReply).not.toHaveBeenCalled();
+    });
+
+    it("falls back to a gentle (non-clinical) message if the conversational call itself fails", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({ mentionsPhysicalSymptom: false, matchedGuidelineId: null })
+      );
+      mockedConversationalReply.mockRejectedValue(new Error("network error"));
+
+      const res = await POST(makeRequest(baseRequestBody({ message: "thank you!" })));
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("conversational");
+      if (body.type === "conversational") {
+        expect(body.assistantMessage).not.toContain("חירום");
+        expect(body.assistantMessage.length).toBeGreaterThan(0);
       }
     });
   });

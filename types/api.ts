@@ -40,6 +40,15 @@ export type ChatApiResponse =
       pendingGuidelineQueue: PendingGuidelineQueue;
     }
   | {
+      /** A non-symptom message (greeting, thanks, small talk, app questions) — never graded, see lib/llm/conversation.ts. Mirrors follow_up's state-carrying fields (always no-ops here: no questionnaire was in progress for this branch to fire). */
+      type: "conversational";
+      assistantMessage: string;
+      activeGuidelineId: string | null;
+      pendingFields: PendingFields;
+      followUpRoundCount: number;
+      pendingGuidelineQueue: PendingGuidelineQueue;
+    }
+  | {
       type: "graded";
       assistantMessage: string;
       grade: RagGrade;
