@@ -28,7 +28,8 @@ async function persistTurn(
   sessionId: string,
   patientContext: PatientContext,
   patientMessage: string,
-  response: ChatApiResponse
+  response: ChatApiResponse,
+  evaluation?: EvaluationResult
 ): Promise<void> {
   if (response.type === "error_failsafe") return;
   try {
@@ -37,8 +38,11 @@ async function persistTurn(
       patientContext,
       patientMessage,
       assistantMessage: response.assistantMessage,
-      grade: response.type === "graded" ? response.grade : undefined,
-      guidelineId: response.type === "graded" ? response.guidelineId : undefined,
+      grade: evaluation?.grade,
+      guidelineId: evaluation?.guidelineId,
+      gradeLabel: evaluation?.gradeLabel,
+      description: evaluation?.description,
+      actionText: evaluation?.actionText,
     });
   } catch (err) {
     console.error("Failed to persist chat turn", err);
@@ -240,7 +244,7 @@ export async function POST(request: Request): Promise<Response> {
     // Red always dominates — the queue is dropped, not carried forward.
     const bridge = bridgeToNextQueued(overrideResult, mergedQueue, patientContext);
     const response = await buildGradedResponse(overrideResult, patientContext, bridge);
-    await persistTurn(sessionId, patientContext, message, response);
+    await persistTurn(sessionId, patientContext, message, response, bridge.topLevelEvaluation);
     return Response.json(response);
   }
 
@@ -271,6 +275,6 @@ export async function POST(request: Request): Promise<Response> {
 
   const bridge = bridgeToNextQueued(evaluation, mergedQueue, patientContext);
   const response = await buildGradedResponse(evaluation, patientContext, bridge);
-  await persistTurn(sessionId, patientContext, message, response);
+  await persistTurn(sessionId, patientContext, message, response, bridge.topLevelEvaluation);
   return Response.json(response);
 }

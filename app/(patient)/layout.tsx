@@ -3,7 +3,7 @@ import { Heebo } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { SafetyHeader } from "@/components/layout/SafetyHeader";
-import "./globals.css";
+import "../globals.css";
 
 // Geist (the previous font) has no Hebrew glyphs — Heebo was designed for
 // Hebrew and covers Latin too, so numbers/phone numbers still render fine.

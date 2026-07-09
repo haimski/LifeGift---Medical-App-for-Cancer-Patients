@@ -66,6 +66,14 @@ model GradeEvent {
   session     PatientSession @relation(fields: [sessionId], references: [id])
   grade       String
   guidelineId String
+  /// Snapshots of EvaluationResult.gradeLabel/description/actionText at the
+  /// moment this turn was graded — the staff dashboard's drill-down "why
+  /// this grade" quotes these verbatim (Phase 8), rather than re-deriving
+  /// them from the current lib/triage/guidelines/*.ts, which could have
+  /// been edited since. A deliberate historical snapshot, not a live join.
+  gradeLabel  String
+  description String
+  actionText  String
   createdAt   DateTime @default(now())
 
   @@index([sessionId])

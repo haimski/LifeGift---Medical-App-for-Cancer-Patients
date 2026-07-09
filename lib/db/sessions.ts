@@ -1,6 +1,8 @@
 import "server-only";
 import { getPrismaClient } from "@/lib/db/prisma";
+import { resolveDisplayName } from "@/lib/triage/registry";
 import type { PatientContext, RagGrade } from "@/lib/triage/types";
+import type { StaffSessionDetail, StaffSessionSummary } from "@/types/api";
 
 interface RecordChatTurnParams {
   sessionId: string;
@@ -10,6 +12,10 @@ interface RecordChatTurnParams {
   /** Only set when this turn produced a graded (or global-override) result. */
   grade?: RagGrade;
   guidelineId?: string;
+  /** Snapshots of EvaluationResult.gradeLabel/description/actionText — see schema.prisma's GradeEvent doc comment. */
+  gradeLabel?: string;
+  description?: string;
+  actionText?: string;
 }
 
 /**
@@ -28,6 +34,9 @@ export async function recordChatTurn({
   assistantMessage,
   grade,
   guidelineId,
+  gradeLabel,
+  description,
+  actionText,
 }: RecordChatTurnParams): Promise<void> {
   const prisma = getPrismaClient();
 
@@ -58,8 +67,10 @@ export async function recordChatTurn({
     ],
   });
 
-  if (grade && guidelineId) {
-    await prisma.gradeEvent.create({ data: { sessionId, grade, guidelineId } });
+  if (grade && guidelineId && gradeLabel !== undefined && description !== undefined && actionText !== undefined) {
+    await prisma.gradeEvent.create({
+      data: { sessionId, grade, guidelineId, gradeLabel, description, actionText },
+    });
   }
 }
 
@@ -79,4 +90,80 @@ export async function identifyPatientSession(
     where: { id: sessionId },
     data: { patientName: identity.patientName, contactNumber: identity.contactNumber },
   });
+}
+
+/**
+ * The staff worklist's data source (GET /api/staff/sessions) — one row per
+ * session that has been graded at least once. Sessions with no GradeEvent
+ * yet (still mid follow-up questions) don't appear, since there's nothing
+ * for staff to triage yet. Urgency sorting happens in the route, not here.
+ */
+export async function listActiveSessions(): Promise<StaffSessionSummary[]> {
+  const prisma = getPrismaClient();
+  const sessions = await prisma.patientSession.findMany({
+    include: { gradeEvents: { orderBy: { createdAt: "asc" } } },
+  });
+
+  return sessions
+    .filter((session) => session.gradeEvents.length > 0)
+    .map((session) => {
+      const latest = session.gradeEvents[session.gradeEvents.length - 1];
+      return {
+        id: session.id,
+        patientName: session.patientName,
+        cancerType: session.cancerType,
+        treatmentType: session.treatmentType,
+        currentGrade: latest.grade as RagGrade,
+        guidelineId: latest.guidelineId,
+        presentingComplaint: resolveDisplayName(latest.guidelineId),
+        gradeLabel: latest.gradeLabel,
+        gradedAt: latest.createdAt.toISOString(),
+        gradeTrend: session.gradeEvents.map((event) => event.grade as RagGrade),
+      };
+    });
+}
+
+/**
+ * The drill-down panel's data source (GET /api/staff/sessions/[id]) — the
+ * full read-only transcript plus every graded evaluation's literal
+ * matched-criterion text, so staff see the actual UKONS wording behind
+ * each grade rather than an opaque judgement. Returns null if no session
+ * with this id exists.
+ */
+export async function getSessionDetail(sessionId: string): Promise<StaffSessionDetail | null> {
+  const prisma = getPrismaClient();
+  const session = await prisma.patientSession.findUnique({
+    where: { id: sessionId },
+    include: {
+      messages: { orderBy: { createdAt: "asc" } },
+      gradeEvents: { orderBy: { createdAt: "asc" } },
+    },
+  });
+  if (!session) return null;
+
+  return {
+    id: session.id,
+    patientName: session.patientName,
+    contactNumber: session.contactNumber,
+    cancerType: session.cancerType,
+    treatmentType: session.treatmentType,
+    helplineNumber: session.helplineNumber,
+    messages: session.messages.map((message) => ({
+      id: message.id,
+      role: message.role as "patient" | "assistant",
+      content: message.content,
+      grade: (message.grade as RagGrade | null) ?? null,
+      createdAt: message.createdAt.toISOString(),
+    })),
+    gradeEvents: session.gradeEvents.map((event) => ({
+      id: event.id,
+      grade: event.grade as RagGrade,
+      guidelineId: event.guidelineId,
+      presentingComplaint: resolveDisplayName(event.guidelineId),
+      gradeLabel: event.gradeLabel,
+      description: event.description,
+      actionText: event.actionText,
+      createdAt: event.createdAt.toISOString(),
+    })),
+  };
 }

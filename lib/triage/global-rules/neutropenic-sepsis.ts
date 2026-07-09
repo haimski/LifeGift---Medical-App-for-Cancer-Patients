@@ -58,6 +58,10 @@ export const neutropenicSepsisOverride: GlobalOverrideRule = {
   // EN: "Suspected Neutropenic Sepsis"
   displayName: "חשד לספסיס נויטרופני (Neutropenic Sepsis)",
   grade: "RED",
+  // EN: "Temperature 37.5C or above, or below 36C, or generally unwell/
+  // rigors, within 6 weeks of cancer treatment."
+  description:
+    "טמפרטורה 37.5 מעלות צלזיוס ומעלה, או מתחת ל-36 מעלות, או תחושת חולי כללית/רעידות, בתוך שישה שבועות מטיפול בסרטן.",
   appliesIf: (fields, ctx) => {
     if (!ctx.recentSactWithin6Weeks) return false;
 

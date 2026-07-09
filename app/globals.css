@@ -113,6 +113,31 @@
 }
 
 /*
+ * Pins the staff dashboard to its light-mode values regardless of the
+ * viewer's system dark-mode preference — see app/staff/layout.tsx. Custom
+ * properties set directly on an element always win over values the same
+ * element would otherwise inherit from :root's dark-mode media query
+ * override above, so this needs no specificity fight — just restating the
+ * light :root values for the properties that dark mode actually changes.
+ */
+.staff-light-theme {
+  color-scheme: light;
+  --background: #f2f8fc;
+  --surface: #ffffff;
+  --foreground: #1c2b3a;
+  --foreground-muted: #55697a;
+  --border: #d7e6f1;
+  --rag-green-bg: #e6f6ee;
+  --rag-amber-bg: #fdf1dc;
+  --rag-red-bg: #fbe8ea;
+  --rag-green-strong: #1f7a4d;
+  --rag-amber-strong: #8a5c0b;
+  --rag-red-badge-text: var(--rag-red-strong);
+  --accent-text: var(--azure-700);
+  --heading: var(--azure-800);
+}
+
+/*
  * Tailwind v4 wraps its own reset/utilities in CSS cascade layers. Plain,
  * unlayered rules always beat layered ones regardless of specificity — so
  * without @layer base here, this file's `a { color: inherit }` was

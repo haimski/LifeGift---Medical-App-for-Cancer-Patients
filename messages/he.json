@@ -94,5 +94,50 @@
     "helplineSetUp": "קו חירום 24 שעות",
     "helplineNotSetUp": "קו החירום לא הוגדר",
     "emergencyLink": "מצב מסכן חיים? התקשר 999"
+  },
+  "dashboard": {
+    "login": {
+      "title": "כניסת צוות",
+      "subtitle": "הזן/י את קוד הגישה של הצוות כדי להמשיך.",
+      "passcodePlaceholder": "קוד גישה",
+      "invalidPasscode": "קוד הגישה שגוי.",
+      "submit": "כניסה"
+    },
+    "grade": {
+      "green": "ירוק",
+      "amber": "כתום",
+      "red": "אדום"
+    },
+    "alertBar": {
+      "redCount": "אדום",
+      "amberCount": "כתום",
+      "greenCount": "ירוק"
+    },
+    "table": {
+      "title": "מטופלים פעילים",
+      "empty": "אין כרגע מטופלים פעילים.",
+      "columnIdentity": "מטופל/ת",
+      "columnComplaint": "תלונה מציגה",
+      "columnElapsed": "זמן שחלף",
+      "columnTreatment": "טיפול"
+    },
+    "row": {
+      "anonymousLabel": "אנונימי/ת — מושב #{shortId}"
+    },
+    "elapsed": {
+      "justNow": "הרגע",
+      "minutesAgo": "לפני {minutes} דק׳",
+      "hoursAgo": "לפני {hours} שע׳"
+    },
+    "drillDown": {
+      "back": "חזרה לרשימה",
+      "transcriptTitle": "תמלול השיחה",
+      "whyThisGradeTitle": "מדוע התקבלה דרגה זו",
+      "criteriaLabel": "קריטריון תואם",
+      "actionLabel": "פעולה נדרשת",
+      "contactTitle": "פרטי יצירת קשר",
+      "contactAnonymous": "המטופל/ת עדיין לא זוהה/תה.",
+      "notFound": "המטופל/ת לא נמצא/ה."
+    }
   }
 }

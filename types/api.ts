@@ -57,3 +57,57 @@ export type ChatApiResponse =
       grade: RagGrade;
       redFlag: boolean;
     };
+
+/** One row in the staff worklist — GET /api/staff/sessions. */
+export interface StaffSessionSummary {
+  id: string;
+  patientName: string | null;
+  cancerType: string;
+  treatmentType: string;
+  currentGrade: RagGrade;
+  /** The matched guideline/override's own id — e.g. distinguishing the neutropenic sepsis override for its distinct icon treatment. */
+  guidelineId: string;
+  /** Hebrew display name of the matched guideline/override, resolved fresh from the registry (not a historical snapshot). */
+  presentingComplaint: string;
+  gradeLabel: string;
+  gradedAt: string;
+  /** Chronological (oldest → newest) grade history for this session's trend indicator. */
+  gradeTrend: RagGrade[];
+}
+
+export interface StaffSessionsResponse {
+  sessions: StaffSessionSummary[];
+}
+
+/** A single chat-turn message, as shown in the drill-down transcript. */
+export interface StaffTranscriptMessage {
+  id: string;
+  role: "patient" | "assistant";
+  content: string;
+  grade: RagGrade | null;
+  createdAt: string;
+}
+
+/** A single rules-engine evaluation, as shown in the drill-down "why this grade" panel. */
+export interface StaffGradeEvent {
+  id: string;
+  grade: RagGrade;
+  guidelineId: string;
+  presentingComplaint: string;
+  gradeLabel: string;
+  description: string;
+  actionText: string;
+  createdAt: string;
+}
+
+/** GET /api/staff/sessions/[id] — the drill-down panel's data. */
+export interface StaffSessionDetail {
+  id: string;
+  patientName: string | null;
+  contactNumber: string | null;
+  cancerType: string;
+  treatmentType: string;
+  helplineNumber: string;
+  messages: StaffTranscriptMessage[];
+  gradeEvents: StaffGradeEvent[];
+}
