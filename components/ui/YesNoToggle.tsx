@@ -23,7 +23,7 @@ export function YesNoToggle({ label, value, onChange }: YesNoToggleProps) {
             className={`min-h-11 flex-1 rounded-xl border text-sm font-semibold transition-colors ${
               value === option.val
                 ? "border-azure-600 bg-azure-600 text-white"
-                : "border-azure-200 bg-surface text-azure-700 hover:bg-azure-50"
+                : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
             }`}
           >
             {option.text}

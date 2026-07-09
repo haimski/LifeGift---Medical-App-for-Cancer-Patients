@@ -28,6 +28,28 @@
   --rag-red: #c22f3a;
   --rag-red-bg: #fbe8ea;
   --rag-red-strong: #a3111c;
+
+  /* Darker text-on-tinted-badge variants of green/amber — the plain
+     --rag-green/--rag-amber values above are ~2.6-3:1 against their own
+     *-bg tint, which fails WCAG AA for the small badge text in
+     GradeBadge. These pass 4.5:1+. */
+  --rag-green-strong: #1f7a4d;
+  --rag-amber-strong: #8a5c0b;
+  /* Mode-aware alias for red badge/chip text specifically (GradeBadge,
+     the header's 999 link) — distinct from --rag-red-strong, which stays
+     a fixed dark red for the RedFlagInterstitial's always-white button.
+     Badge text sits on --rag-red-bg, which itself goes much darker in
+     dark mode, so the text needs to lighten to match — see the dark
+     override below. */
+  --rag-red-badge-text: var(--rag-red-strong);
+
+  /* Mode-aware aliases for azure-700/800 specifically where they're used
+     as text directly on the adaptive --surface/--background (picker
+     buttons, headings) rather than on the fixed-light --azure-50 chip
+     background. azure-700/800 stay unchanged for the chip case, which
+     doesn't need a dark-mode adjustment since azure-50 never darkens. */
+  --accent-text: var(--azure-700);
+  --heading: var(--azure-800);
 }
 
 @theme inline {
@@ -50,11 +72,17 @@
 
   --color-rag-green: var(--rag-green);
   --color-rag-green-bg: var(--rag-green-bg);
+  --color-rag-green-strong: var(--rag-green-strong);
   --color-rag-amber: var(--rag-amber);
   --color-rag-amber-bg: var(--rag-amber-bg);
+  --color-rag-amber-strong: var(--rag-amber-strong);
   --color-rag-red: var(--rag-red);
   --color-rag-red-bg: var(--rag-red-bg);
   --color-rag-red-strong: var(--rag-red-strong);
+  --color-rag-red-badge-text: var(--rag-red-badge-text);
+
+  --color-accent-text: var(--accent-text);
+  --color-heading: var(--heading);
 
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
@@ -71,6 +99,17 @@
     --rag-green-bg: #10301f;
     --rag-amber-bg: #33270d;
     --rag-red-bg: #331419;
+
+    /* Lighter badge-text shades to stay >= 4.5:1 against the darkened
+       *-bg tints above (the light-mode "-strong" shades are dark
+       colors, which read fine on light tints but fail once the tint
+       itself goes dark). */
+    --rag-green-strong: #5cd696;
+    --rag-amber-strong: #c98a1f;
+    --rag-red-badge-text: #ff8a93;
+
+    --accent-text: #a0c7e4;
+    --heading: #c9dff0;
   }
 }
 

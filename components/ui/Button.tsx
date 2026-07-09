@@ -10,7 +10,7 @@ const base =
 const variants: Record<NonNullable<ButtonProps["variant"]>, string> = {
   primary: "bg-azure-600 text-white hover:bg-azure-700",
   secondary:
-    "border border-azure-200 bg-surface text-azure-700 hover:bg-azure-50",
+    "border border-azure-200 bg-surface text-accent-text hover:bg-azure-50",
 };
 
 export function Button({

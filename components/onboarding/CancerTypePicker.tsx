@@ -47,7 +47,7 @@ export function CancerTypePicker({ value, onChange }: CancerTypePickerProps) {
             className={`min-h-11 rounded-full border px-3.5 text-sm font-medium transition-colors ${
               value === type
                 ? "border-azure-600 bg-azure-600 text-white"
-                : "border-azure-200 bg-surface text-azure-700 hover:bg-azure-50"
+                : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
             }`}
           >
             {type}
@@ -63,7 +63,7 @@ export function CancerTypePicker({ value, onChange }: CancerTypePickerProps) {
           className={`min-h-11 rounded-full border px-3.5 text-sm font-medium transition-colors ${
             showOther
               ? "border-azure-600 bg-azure-600 text-white"
-              : "border-azure-200 bg-surface text-azure-700 hover:bg-azure-50"
+              : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
           }`}
         >
           {OTHER}

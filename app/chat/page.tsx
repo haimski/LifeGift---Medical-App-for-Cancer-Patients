@@ -10,6 +10,7 @@ import {
   type PatientContext,
 } from "@/lib/context/patientContext";
 import {
+  clearConversation,
   getConversation,
   saveConversation,
   makeMessageId,
@@ -142,10 +143,36 @@ export default function ChatPage() {
     }
   }
 
+  function handleStartNewConversation() {
+    if (!context || messages.length <= 1) return;
+    const confirmed = window.confirm(
+      "Start a new conversation? This clears your chat history on this device."
+    );
+    if (!confirmed) return;
+
+    clearConversation();
+    setMessages(buildInitialMessages(context.cancerType));
+    setActiveGuidelineId(null);
+    setPendingFields({});
+    setFollowUpRoundCount(0);
+    setRedFlag({ show: false, helplineNumber: "" });
+  }
+
   if (!context) return null;
 
   return (
     <div className="flex flex-1 flex-col">
+      {messages.length > 1 && (
+        <div className="flex justify-end border-b border-border px-4 py-2">
+          <button
+            type="button"
+            onClick={handleStartNewConversation}
+            className="min-h-11 text-xs font-medium text-accent-text underline underline-offset-4"
+          >
+            Start a new conversation
+          </button>
+        </div>
+      )}
       <MessageList messages={messages} isAssistantTyping={isAssistantTyping} />
       <MessageInput onSend={handleSend} disabled={isAssistantTyping || redFlag.show} />
       <RedFlagInterstitial
