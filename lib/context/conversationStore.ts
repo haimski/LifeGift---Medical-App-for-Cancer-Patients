@@ -17,6 +17,11 @@ export function saveConversation(messages: ChatMessage[]): void {
   window.localStorage.setItem(CONVERSATION_KEY, JSON.stringify(messages));
 }
 
+export function clearConversation(): void {
+  if (typeof window === "undefined") return;
+  window.localStorage.removeItem(CONVERSATION_KEY);
+}
+
 export function makeMessageId(): string {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()

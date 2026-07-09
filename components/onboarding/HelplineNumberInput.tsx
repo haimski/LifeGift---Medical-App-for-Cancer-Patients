@@ -36,12 +36,16 @@ export function HelplineNumberInput({
         onChange={(event) => onChange(event.target.value)}
         placeholder="e.g. 01234 567890"
         className={`min-h-11 w-full rounded-xl border bg-surface px-3.5 text-sm text-foreground outline-none focus:border-azure-500 ${
-          valid ? "border-azure-200" : "border-rag-red"
+          valid ? "border-azure-200" : "border-foreground"
         }`}
       />
       {!valid && (
-        <p className="mt-1 text-xs text-rag-red">
-          That doesn&apos;t look like a phone number yet.
+        // Plain form validation, not a triage grade — deliberately not
+        // using the reserved rag-red tokens (see globals.css) so a typo
+        // in a phone number never looks like a clinical Red result.
+        <p className="mt-1 text-xs text-foreground">
+          <span aria-hidden>⚠</span> That doesn&apos;t look like a phone
+          number yet.
         </p>
       )}
       {valid && trimmed.length > 0 && (

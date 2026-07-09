@@ -1,9 +1,9 @@
 import type { RagGrade } from "@/types/api";
 
 const STYLES: Record<RagGrade, string> = {
-  GREEN: "bg-rag-green-bg text-rag-green",
-  AMBER: "bg-rag-amber-bg text-rag-amber",
-  RED: "bg-rag-red-bg text-rag-red-strong",
+  GREEN: "bg-rag-green-bg text-rag-green-strong",
+  AMBER: "bg-rag-amber-bg text-rag-amber-strong",
+  RED: "bg-rag-red-bg text-rag-red-badge-text",
 };
 
 const LABELS: Record<RagGrade, string> = {

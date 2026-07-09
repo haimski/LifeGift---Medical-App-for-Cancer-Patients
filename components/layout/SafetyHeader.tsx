@@ -35,7 +35,7 @@ export function SafetyHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-surface/95 backdrop-blur supports-[backdrop-filter]:bg-surface/80">
       <div className="mx-auto flex w-full max-w-md flex-col gap-2 px-4 py-2.5 sm:flex-row sm:items-center sm:justify-between">
-        <span className="text-sm font-semibold tracking-tight text-azure-800">
+        <span className="text-sm font-semibold tracking-tight text-heading">
           LifeGift
         </span>
         <div className="flex items-center gap-2">
@@ -49,7 +49,7 @@ export function SafetyHeader() {
           </a>
           <a
             href={toTelHref(EMERGENCY_NUMBER)}
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-rag-red bg-rag-red-bg px-3 text-xs font-semibold text-rag-red-strong transition-colors hover:brightness-95"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-full border border-rag-red bg-rag-red-bg px-3 text-xs font-semibold text-rag-red-badge-text transition-colors hover:brightness-95"
           >
             <span aria-hidden>🚨</span>
             Life-threatening? Call 999

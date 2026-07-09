@@ -38,7 +38,7 @@ export function TreatmentTypePicker({
             className={`min-h-11 rounded-xl border px-3.5 text-left text-sm font-medium transition-colors ${
               value === type
                 ? "border-azure-600 bg-azure-600 text-white"
-                : "border-azure-200 bg-surface text-azure-700 hover:bg-azure-50"
+                : "border-azure-200 bg-surface text-accent-text hover:bg-azure-50"
             }`}
           >
             {TREATMENT_TYPE_LABELS[type]}
