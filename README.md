@@ -31,7 +31,18 @@ Next.js 16 is newer than most training data know about — check `node_modules/n
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required — the extraction/phrasing steps in `lib/llm/` throw without it, which the route handles as a safe `error_failsafe`, never a crash). `LIFEGIFT_EXTRACTION_MODEL`/`LIFEGIFT_PHRASING_MODEL` are optional overrides of the default Haiku/Sonnet models.
+Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required — the extraction/phrasing steps in `lib/llm/` throw without it, which the route handles as a safe `error_failsafe`, never a crash). `LIFEGIFT_EXTRACTION_MODEL`/`LIFEGIFT_PHRASING_MODEL` are optional overrides of the default Haiku/Sonnet models. `DATABASE_URL` is required for persistence (see below).
+
+## Persistence (`lib/db/`)
+
+`PatientSession`/`Message`/`GradeEvent` (schema in `lib/db/schema.prisma`, a non-default location wired via `prisma.config.ts`) are written on every `/api/chat` turn via `lib/db/sessions.ts`, using Prisma's Neon serverless driver adapter (`lib/db/prisma.ts`) rather than a raw TCP connection — see the plan's "Prisma + serverless Postgres connections" risk for why. This is **best-effort**: a DB outage is caught and logged in `route.ts`'s `persistTurn`, never allowed to break, delay, or alter the patient-facing chat response.
+
+To set up a real database:
+1. Create a Postgres store from the Vercel dashboard (Neon-backed) and pull `DATABASE_URL` into `.env.local` (or copy it from the Vercel project settings).
+2. Run `npx prisma migrate dev --name init` once, locally, to create the tables (needs `DATABASE_URL` reachable — `prisma.config.ts` loads `.env.local` via `dotenv` for the CLI, since defining a config file opts out of Prisma's own auto-loading).
+3. Add `DATABASE_URL` to the Vercel project's environment variables alongside the Phase 6.5 vars, then `npx prisma migrate deploy` against production (or let your deploy pipeline run it).
+
+`npm install`'s `postinstall` script runs `prisma generate` automatically (needed for `@prisma/client`'s types/runtime) — it does **not** need a reachable database, only the schema file.
 
 ## Deployment
 

@@ -68,7 +68,15 @@
     "startNewConversation": "Start a new conversation",
     "startNewConversationConfirm": "Start a new conversation? This clears your chat history on this device.",
     "inputPlaceholder": "Tell us what's going on...",
-    "sendLabel": "Send message"
+    "sendLabel": "Send message",
+    "identify": {
+      "title": "So our care team can reach you",
+      "description": "Totally optional — leave a name and phone number so the medical team can follow up if needed.",
+      "namePlaceholder": "Full name",
+      "contactPlaceholder": "Contact phone number",
+      "save": "Save",
+      "skip": "Not now"
+    }
   },
   "gradeBadge": {
     "green": "Green — no cause for concern",

@@ -1,3 +1,4 @@
+import { recordChatTurn } from "@/lib/db/sessions";
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
 import { chatApiRequestSchema } from "@/lib/llm/schemas";
@@ -14,6 +15,34 @@ const FAIL_SAFE_MESSAGE =
 
 function failSafeResponse(message: string): ChatApiResponse {
   return { type: "error_failsafe", assistantMessage: message, grade: "AMBER", redFlag: false };
+}
+
+/**
+ * Persists the turn to Postgres, best-effort. Always called after the
+ * response body is already fully computed — a DB outage must never delay,
+ * alter, or break the patient-facing response, so failures here are only
+ * logged, never thrown. Skips error_failsafe turns (extraction itself
+ * failed, so there's no stable grade/guideline context worth recording).
+ */
+async function persistTurn(
+  sessionId: string,
+  patientContext: PatientContext,
+  patientMessage: string,
+  response: ChatApiResponse
+): Promise<void> {
+  if (response.type === "error_failsafe") return;
+  try {
+    await recordChatTurn({
+      sessionId,
+      patientContext,
+      patientMessage,
+      assistantMessage: response.assistantMessage,
+      grade: response.type === "graded" ? response.grade : undefined,
+      guidelineId: response.type === "graded" ? response.guidelineId : undefined,
+    });
+  } catch (err) {
+    console.error("Failed to persist chat turn", err);
+  }
 }
 
 /** Never lets a null overwrite a value already known from an earlier turn. */
@@ -170,6 +199,7 @@ export async function POST(request: Request): Promise<Response> {
   }
 
   const {
+    sessionId,
     patientContext,
     conversationHistory,
     message,
@@ -209,7 +239,9 @@ export async function POST(request: Request): Promise<Response> {
   if (overrideResult) {
     // Red always dominates — the queue is dropped, not carried forward.
     const bridge = bridgeToNextQueued(overrideResult, mergedQueue, patientContext);
-    return Response.json(await buildGradedResponse(overrideResult, patientContext, bridge));
+    const response = await buildGradedResponse(overrideResult, patientContext, bridge);
+    await persistTurn(sessionId, patientContext, message, response);
+    return Response.json(response);
   }
 
   const hasMissingFields = extraction.missingRequiredFields.length > 0;
@@ -225,6 +257,7 @@ export async function POST(request: Request): Promise<Response> {
       followUpRoundCount: followUpRoundCount + 1,
       pendingGuidelineQueue: mergedQueue,
     };
+    await persistTurn(sessionId, patientContext, message, followUp);
     return Response.json(followUp);
   }
 
@@ -237,5 +270,7 @@ export async function POST(request: Request): Promise<Response> {
   });
 
   const bridge = bridgeToNextQueued(evaluation, mergedQueue, patientContext);
-  return Response.json(await buildGradedResponse(evaluation, patientContext, bridge));
+  const response = await buildGradedResponse(evaluation, patientContext, bridge);
+  await persistTurn(sessionId, patientContext, message, response);
+  return Response.json(response);
 }

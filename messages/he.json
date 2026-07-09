@@ -68,7 +68,15 @@
     "startNewConversation": "התחל שיחה חדשה",
     "startNewConversationConfirm": "להתחיל שיחה חדשה? פעולה זו תמחק את היסטוריית הצ׳אט במכשיר זה.",
     "inputPlaceholder": "ספר לנו מה קורה...",
-    "sendLabel": "שליחת הודעה"
+    "sendLabel": "שליחת הודעה",
+    "identify": {
+      "title": "כדי שצוות הטיפול יוכל לפנות אליך",
+      "description": "זה לגמרי לבחירתך — השאר/י שם ומספר טלפון כדי שהצוות הרפואי יוכל ליצור קשר במידת הצורך.",
+      "namePlaceholder": "שם מלא",
+      "contactPlaceholder": "מספר טלפון ליצירת קשר",
+      "save": "שמירה",
+      "skip": "לא כרגע"
+    }
   },
   "gradeBadge": {
     "green": "ירוק — אין סיבה לדאגה",

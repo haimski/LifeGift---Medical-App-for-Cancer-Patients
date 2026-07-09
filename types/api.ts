@@ -17,6 +17,8 @@ export type PendingFields = Record<string, string | number | boolean | null>;
 export type PendingGuidelineQueue = string[];
 
 export interface ChatApiRequest {
+  /** UUID held in the patient's localStorage (see lib/context/sessionId.ts) — identifies the PatientSession row this turn persists to, not a login. */
+  sessionId: string;
   patientContext: PatientContext;
   /** Bounded recent history — the client truncates before sending, see conversationStore.ts. */
   conversationHistory: ChatMessage[];

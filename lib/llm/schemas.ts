@@ -31,6 +31,7 @@ export type PhrasingResult = z.infer<typeof phrasingResultSchema>;
 
 /** Defensive validation of the incoming /api/chat request body. */
 export const chatApiRequestSchema = z.object({
+  sessionId: z.string().min(1),
   patientContext: z.object({
     cancerType: z.string(),
     treatmentType: z.enum([
