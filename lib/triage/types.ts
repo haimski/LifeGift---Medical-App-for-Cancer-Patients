@@ -58,6 +58,8 @@ export interface GlobalOverrideRule {
   displayName: string;
   appliesIf: (fields: ExtractedFields, ctx: PatientContext) => boolean;
   grade: "RED";
+  /** Literal, patient-observable trigger criteria — the override's equivalent of GradeCriterion.description. */
+  description: string;
   action: string;
 }
 
@@ -65,6 +67,8 @@ export interface EvaluationResult {
   grade: RagGrade;
   guidelineId: string;
   gradeLabel: string;
+  /** Literal matched-criterion text (GradeCriterion.description or GlobalOverrideRule.description) — the staff dashboard's drill-down "why this grade" quotes this verbatim. See lib/db/schema.prisma's GradeEvent. */
+  description: string;
   actionText: string;
   escalationReason?: string;
   source: "global_override" | "guideline" | "fail_safe";

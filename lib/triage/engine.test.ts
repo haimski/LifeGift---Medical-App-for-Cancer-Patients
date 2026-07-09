@@ -27,6 +27,9 @@ describe("engine: global override precedence", () => {
     expect(result.grade).toBe("RED");
     expect(result.source).toBe("global_override");
     expect(result.guidelineId).toBe("neutropenic_sepsis_override");
+    // The staff dashboard's drill-down (Phase 8) quotes this verbatim as
+    // "why this grade" — it must always be populated, not just actionText.
+    expect(result.description.length).toBeGreaterThan(0);
   });
 
   it("does not fire the override for a patient with no recent SACT, even with a fever", () => {
@@ -50,6 +53,7 @@ describe("engine: fail-safe behaviour", () => {
     const result = evaluate({}, ctx, null);
     expect(result.grade).toBe("AMBER");
     expect(result.source).toBe("fail_safe");
+    expect(result.description.length).toBeGreaterThan(0);
   });
 
   it("defaults to Amber when possibleExcludedCondition is flagged, even with a known guideline id", () => {

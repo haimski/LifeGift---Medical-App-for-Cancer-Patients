@@ -46,3 +46,18 @@ export function findGuideline(id: string | null): ToxicityGuideline | null {
   if (!id) return null;
   return TOXICITY_GUIDELINES.find((guideline) => guideline.id === id) ?? null;
 }
+
+/**
+ * Resolves a guidelineId (as stored on a GradeEvent) to its Hebrew display
+ * name, for the staff worklist's "presenting complaint" column — checks
+ * regular guidelines first, then global overrides (e.g. neutropenic
+ * sepsis, whose id never appears in TOXICITY_GUIDELINES), falling back to
+ * the raw id itself for the engine's own "unmatched"/fail-safe ids.
+ */
+export function resolveDisplayName(guidelineId: string): string {
+  const guideline = findGuideline(guidelineId);
+  if (guideline) return guideline.displayName;
+  const override = GLOBAL_OVERRIDE_RULES.find((rule) => rule.id === guidelineId);
+  if (override) return override.displayName;
+  return guidelineId;
+}

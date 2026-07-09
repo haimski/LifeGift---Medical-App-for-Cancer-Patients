@@ -94,5 +94,50 @@
     "helplineSetUp": "24-hour helpline",
     "helplineNotSetUp": "Helpline not set up",
     "emergencyLink": "Life-threatening? Call 999"
+  },
+  "dashboard": {
+    "login": {
+      "title": "Staff sign-in",
+      "subtitle": "Enter the staff passcode to continue.",
+      "passcodePlaceholder": "Passcode",
+      "invalidPasscode": "That passcode is incorrect.",
+      "submit": "Sign in"
+    },
+    "grade": {
+      "green": "Green",
+      "amber": "Amber",
+      "red": "Red"
+    },
+    "alertBar": {
+      "redCount": "Red",
+      "amberCount": "Amber",
+      "greenCount": "Green"
+    },
+    "table": {
+      "title": "Active patients",
+      "empty": "No active patients right now.",
+      "columnIdentity": "Patient",
+      "columnComplaint": "Presenting complaint",
+      "columnElapsed": "Elapsed",
+      "columnTreatment": "Treatment"
+    },
+    "row": {
+      "anonymousLabel": "Anonymous — Session #{shortId}"
+    },
+    "elapsed": {
+      "justNow": "Just now",
+      "minutesAgo": "{minutes}m ago",
+      "hoursAgo": "{hours}h ago"
+    },
+    "drillDown": {
+      "back": "Back to worklist",
+      "transcriptTitle": "Conversation transcript",
+      "whyThisGradeTitle": "Why this grade",
+      "criteriaLabel": "Matched criteria",
+      "actionLabel": "Required action",
+      "contactTitle": "Contact details",
+      "contactAnonymous": "This patient hasn't been identified yet.",
+      "notFound": "Patient not found."
+    }
   }
 }

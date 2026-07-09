@@ -28,8 +28,19 @@ export function moreSevereEvaluation(a: EvaluationResult, b: EvaluationResult): 
   return SEVERITY_ORDER[b.grade] > SEVERITY_ORDER[a.grade] ? b : a;
 }
 
+// EN: "We couldn't confidently match this to a specific guideline, so to be
+// safe: please contact your 24-hour oncology helpline to talk through what
+// you're experiencing." — this is genuinely patient-facing (the fallback
+// text if phrasing itself fails, per buildGradedResponse in route.ts), so
+// it was a gap that this stayed English through Phase 6.2; fixed here.
 const FAIL_SAFE_ACTION =
-  "We couldn't confidently match this to a specific guideline, so to be safe: please contact your 24-hour oncology helpline to talk through what you're experiencing.";
+  "לא הצלחנו להתאים את זה בביטחון להנחיה ספציפית, אז ליתר ביטחון: אנא פנה/י לקו החירום האונקולוגי הפעיל 24 שעות ביממה כדי לדבר על מה שאת/ה חווה.";
+// EN: "No guideline matched this message closely enough to grade automatically."
+const FAIL_SAFE_UNMATCHED_DESCRIPTION =
+  "אף הנחיה לא תאמה את ההודעה הזו מספיק כדי לדרג אוטומטית.";
+// EN: "The matched guideline's fields didn't clearly fit any of its grade bands."
+const FAIL_SAFE_UNCLEAR_DESCRIPTION =
+  "השדות של ההנחיה המתאימה לא התאימו בבירור לאף אחת מרמות החומרה שלה.";
 
 /**
  * Checks only the global override rules (e.g. neutropenic sepsis),
@@ -49,6 +60,7 @@ export function checkGlobalOverrides(
         grade: "RED",
         guidelineId: rule.id,
         gradeLabel: rule.displayName,
+        description: rule.description,
         actionText: rule.action,
         source: "global_override",
       };
@@ -90,7 +102,9 @@ export function evaluate(
     return {
       grade: "AMBER",
       guidelineId: guideline?.id ?? "unmatched",
-      gradeLabel: "Unmatched — fail-safe",
+      // EN: "Unmatched — fail-safe"
+      gradeLabel: "לא הותאם — ליתר ביטחון",
+      description: FAIL_SAFE_UNMATCHED_DESCRIPTION,
       actionText: FAIL_SAFE_ACTION,
       source: "fail_safe",
     };
@@ -116,6 +130,7 @@ export function evaluate(
       grade,
       guidelineId: guideline.id,
       gradeLabel: criterion.label,
+      description: criterion.description,
       actionText: criterion.action,
       escalationReason,
       source: "guideline",
@@ -127,7 +142,9 @@ export function evaluate(
   return {
     grade: "AMBER",
     guidelineId: guideline.id,
-    gradeLabel: "Unclear severity — fail-safe",
+    // EN: "Unclear severity — fail-safe"
+    gradeLabel: "חומרה לא ברורה — ליתר ביטחון",
+    description: FAIL_SAFE_UNCLEAR_DESCRIPTION,
     actionText: FAIL_SAFE_ACTION,
     source: "fail_safe",
   };

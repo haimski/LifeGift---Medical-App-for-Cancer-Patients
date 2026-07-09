@@ -31,11 +31,11 @@ Next.js 16 is newer than most training data know about — check `node_modules/n
 
 ## Environment variables
 
-Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required — the extraction/phrasing steps in `lib/llm/` throw without it, which the route handles as a safe `error_failsafe`, never a crash). `LIFEGIFT_EXTRACTION_MODEL`/`LIFEGIFT_PHRASING_MODEL` are optional overrides of the default Haiku/Sonnet models. `DATABASE_URL` is required for persistence (see below).
+Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required — the extraction/phrasing steps in `lib/llm/` throw without it, which the route handles as a safe `error_failsafe`, never a crash). `LIFEGIFT_EXTRACTION_MODEL`/`LIFEGIFT_PHRASING_MODEL` are optional overrides of the default Haiku/Sonnet models. `DATABASE_URL` is required for persistence (see below); `STAFF_PASSCODE`/`AUTH_SECRET` are required for the staff dashboard (see further below).
 
 ## Persistence (`lib/db/`)
 
-`PatientSession`/`Message`/`GradeEvent` (schema in `lib/db/schema.prisma`, a non-default location wired via `prisma.config.ts`) are written on every `/api/chat` turn via `lib/db/sessions.ts`, using Prisma's Neon serverless driver adapter (`lib/db/prisma.ts`) rather than a raw TCP connection — see the plan's "Prisma + serverless Postgres connections" risk for why. This is **best-effort**: a DB outage is caught and logged in `route.ts`'s `persistTurn`, never allowed to break, delay, or alter the patient-facing chat response.
+`PatientSession`/`Message`/`GradeEvent` (schema in `lib/db/schema.prisma`, a non-default location wired via `prisma.config.ts`) are written on every `/api/chat` turn via `lib/db/sessions.ts`, using Prisma's Neon serverless driver adapter (`lib/db/prisma.ts`) rather than a raw TCP connection — see the plan's "Prisma + serverless Postgres connections" risk for why. This is **best-effort**: a DB outage is caught and logged in `route.ts`'s `persistTurn`, never allowed to break, delay, or alter the patient-facing chat response. Each `GradeEvent` also stores a snapshot of `gradeLabel`/`description`/`actionText` at grading time — a deliberate historical copy, not a live re-derivation, so the staff dashboard's drill-down always shows exactly what the patient saw even if a guideline file is edited later.
 
 To set up a real database:
 1. Create a Postgres store from the Vercel dashboard (Neon-backed) and pull `DATABASE_URL` into `.env.local` (or copy it from the Vercel project settings).
@@ -43,6 +43,21 @@ To set up a real database:
 3. Add `DATABASE_URL` to the Vercel project's environment variables alongside the Phase 6.5 vars, then `npx prisma migrate deploy` against production (or let your deploy pipeline run it).
 
 `npm install`'s `postinstall` script runs `prisma generate` automatically (needed for `@prisma/client`'s types/runtime) — it does **not** need a reachable database, only the schema file.
+
+## Staff dashboard (`/staff/*`)
+
+A single shared staff login (no per-user accounts in v1) gates a poll-only worklist showing every actively-graded `PatientSession`, sorted by urgency (Red, then Amber, then Green — see `app/api/staff/sessions/route.ts`), plus a drill-down transcript per session with the literal matched-criterion text quoted from its `GradeEvent` snapshot.
+
+- **Auth**: NextAuth (Auth.js) v5 with a Credentials provider (`lib/auth/staffAuth.ts`) checking a single passcode against `STAFF_PASSCODE`. Requires `AUTH_SECRET` too (`openssl rand -base64 32`) — NextAuth throws `MissingSecret` without it, even in dev. The `(protected)` route group's layout does an optimistic redirect to `/staff/login`; the actual security boundary is each API route independently calling `auth()` (see Next.js's own auth guide on why layouts alone aren't sufficient).
+- **Separate root layout**: `app/(staff)/layout.tsx` is a second Next.js root layout (its own `<html>/<body>`, via the "multiple root layouts" route-group pattern) — the staff dashboard has none of the patient app's mobile-width shell or `SafetyHeader`, since those are patient-specific chrome that would look out of place and unprofessional here.
+- **Always light**: `app/globals.css`'s `.staff-light-theme` class (applied on the staff `<html>` element) restates the light-mode custom-property values, which always win over an ancestor's dark-mode media-query values for any element they're set on directly — so the dashboard stays light-themed regardless of the viewer's OS/browser dark-mode preference.
+- **Polling, not real-time**: `/staff/dashboard` polls `GET /api/staff/sessions` every ~25s (Phase 9 adds Pusher-based real-time push for Red events specifically, on top of this).
+
+For local testing, add to `.env.local`:
+```
+STAFF_PASSCODE=<any passcode you choose>
+AUTH_SECRET=<output of: openssl rand -base64 32>
+```
 
 ## Deployment
 
