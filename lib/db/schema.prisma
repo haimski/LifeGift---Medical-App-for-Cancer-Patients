@@ -1,0 +1,72 @@
+// Prisma schema for the staff-visibility side of LifeGift (Phase 7+).
+// Lives under lib/db/ (not the default prisma/ directory) to sit alongside
+// the rest of the app's server-side lib code — see prisma.config.ts for the
+// custom schema path wiring and lib/db/prisma.ts for the Neon-adapter client.
+//
+// PatientContext itself (cancerType/treatmentType/helplineNumber/
+// recentSactWithin6Weeks) still lives client-side in localStorage too and is
+// sent with every /api/chat request for the patient's own use — these rows
+// are what the staff dashboard (Phase 8+) reads.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// One row per anonymous chat session, created (upserted) on its first
+/// /api/chat turn — keyed by a UUID the patient's browser holds in
+/// localStorage (see lib/context/sessionId.ts), not a login.
+model PatientSession {
+  id                     String   @id
+  cancerType             String
+  treatmentType          String
+  helplineNumber         String
+  recentSactWithin6Weeks Boolean
+  /// Set once the patient fills in (or the team otherwise obtains) the
+  /// progressive-identification prompt shown on a session's first Amber/Red
+  /// grade — see components/chat/IdentifyPrompt.tsx. Null means still
+  /// anonymous; the patient's own emergency guidance never depends on this
+  /// being set.
+  patientName            String?
+  contactNumber          String?
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  messages    Message[]
+  gradeEvents GradeEvent[]
+}
+
+/// One row per chat turn (both the patient's message and the assistant's
+/// reply), so staff can open a read-only transcript (Phase 8's drill-down).
+model Message {
+  id        String   @id @default(uuid())
+  sessionId String
+  session   PatientSession @relation(fields: [sessionId], references: [id])
+  role      String
+  content   String
+  /// Only set on graded assistant messages — the RagGrade enum value, kept
+  /// as a plain string here since the source of truth for its meaning is
+  /// lib/triage/types.ts, not this schema.
+  grade     String?
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+}
+
+/// One row per rules-engine evaluation, so the staff dashboard can show a
+/// Green->Amber->Red trend per session (Phase 8's trend indicator), not
+/// just the current state.
+model GradeEvent {
+  id          String   @id @default(uuid())
+  sessionId   String
+  session     PatientSession @relation(fields: [sessionId], references: [id])
+  grade       String
+  guidelineId String
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId])
+}

@@ -6,9 +6,13 @@ vi.mock("@/lib/llm/extraction", () => ({
 vi.mock("@/lib/llm/phrasing", () => ({
   callPhrasing: vi.fn(),
 }));
+vi.mock("@/lib/db/sessions", () => ({
+  recordChatTurn: vi.fn(),
+}));
 
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
+import { recordChatTurn } from "@/lib/db/sessions";
 import type { ExtractionResult } from "@/lib/llm/schemas";
 import type { PatientContext } from "@/lib/triage/types";
 import type { ChatApiResponse } from "@/types/api";
@@ -16,6 +20,7 @@ import { POST } from "@/app/api/chat/route";
 
 const mockedExtraction = vi.mocked(callExtraction);
 const mockedPhrasing = vi.mocked(callPhrasing);
+const mockedRecordChatTurn = vi.mocked(recordChatTurn);
 
 const patientContext: PatientContext = {
   cancerType: "Breast",
@@ -34,6 +39,7 @@ function makeRequest(body: unknown): Request {
 
 function baseRequestBody(overrides: Record<string, unknown> = {}) {
   return {
+    sessionId: "test-session-id",
     patientContext,
     conversationHistory: [],
     message: "test message",
@@ -326,6 +332,88 @@ describe("/api/chat route", () => {
       expect(body.type).toBe("follow_up");
       if (body.type === "follow_up") {
         expect(body.pendingGuidelineQueue).toEqual(["rash", "mucositis"]);
+      }
+    });
+  });
+
+  describe("persistence (Phase 7)", () => {
+    it("records a graded turn with the sessionId, grade, and guidelineId", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          extractedFields: { vomitingEpisodesLast24h: 1 },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "GREEN", message: "phrased message" });
+
+      await POST(
+        makeRequest(
+          baseRequestBody({
+            sessionId: "session-abc",
+            message: "sick once",
+            activeGuidelineId: "vomiting",
+          })
+        )
+      );
+
+      expect(mockedRecordChatTurn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          sessionId: "session-abc",
+          patientMessage: "sick once",
+          assistantMessage: "phrased message",
+          grade: "GREEN",
+          guidelineId: "vomiting",
+        })
+      );
+    });
+
+    it("records a follow_up turn without a grade/guidelineId", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          missingRequiredFields: ["vomitingEpisodesLast24h"],
+          followUpQuestion: "How many times?",
+        })
+      );
+
+      await POST(makeRequest(baseRequestBody({ message: "I've been sick" })));
+
+      expect(mockedRecordChatTurn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          patientMessage: "I've been sick",
+          grade: undefined,
+          guidelineId: undefined,
+        })
+      );
+    });
+
+    it("does not attempt to persist when extraction itself fails (error_failsafe)", async () => {
+      mockedExtraction.mockRejectedValue(new Error("Anthropic API unreachable"));
+
+      await POST(makeRequest(baseRequestBody({ message: "anything" })));
+
+      expect(mockedRecordChatTurn).not.toHaveBeenCalled();
+    });
+
+    it("still returns the graded response even if persistence itself fails", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "diarrhoea",
+          extractedFields: { stoolsPerDayOverBaseline: 8, hasBloodInStool: false },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "RED", message: "urgent message" });
+      mockedRecordChatTurn.mockRejectedValue(new Error("connection refused"));
+
+      const res = await POST(
+        makeRequest(baseRequestBody({ message: "8 times today", activeGuidelineId: "diarrhoea" }))
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("RED");
+        expect(body.redFlag).toBe(true);
       }
     });
   });

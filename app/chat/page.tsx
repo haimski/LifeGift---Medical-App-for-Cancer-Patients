@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { RedFlagInterstitial } from "@/components/chat/RedFlagInterstitial";
+import { IdentifyPrompt } from "@/components/chat/IdentifyPrompt";
 import {
   getPatientContext,
   type PatientContext,
@@ -16,6 +17,11 @@ import {
   saveConversation,
   makeMessageId,
 } from "@/lib/context/conversationStore";
+import { getOrCreateSessionId } from "@/lib/context/sessionId";
+import {
+  hasBeenAskedToIdentify,
+  markAskedToIdentify,
+} from "@/lib/context/identification";
 import type { ChatApiRequest, ChatApiResponse, ChatMessage, PendingFields } from "@/types/api";
 
 const MAX_HISTORY_SENT = 20;
@@ -44,8 +50,19 @@ export default function ChatPage() {
   // hydration-mismatches. See the same pattern/comment in
   // app/onboarding/helpline/page.tsx.
   const [context, setContext] = useState<PatientContext | null>(null);
+  const [sessionId, setSessionId] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
+
+  // Progressive identification (Phase 7): the prompt is shown at most once
+  // per session (persisted in localStorage, so it survives a page reload —
+  // see lib/context/identification.ts), and — per the safety rule — never
+  // blocks or delays the Red interstitial. `identifyPendingAfterRedDismiss`
+  // queues it to appear only once the interstitial has been acknowledged.
+  const [hasIdentified, setHasIdentified] = useState(false);
+  const [showIdentifyPrompt, setShowIdentifyPrompt] = useState(false);
+  const [identifyPendingAfterRedDismiss, setIdentifyPendingAfterRedDismiss] =
+    useState(false);
 
   // Tracks the in-progress complaint across follow-up turns; reset once a
   // turn comes back graded (or fail-safed) so the next message starts a
@@ -75,6 +92,8 @@ export default function ChatPage() {
     }
     // eslint-disable-next-line react-hooks/set-state-in-effect -- hydration-safe: see comment above
     setContext(ctx);
+    setSessionId(getOrCreateSessionId());
+    setHasIdentified(hasBeenAskedToIdentify());
     setMessages(
       buildInitialMessages(ctx.cancerType, t("greeting", { cancerType: ctx.cancerType }))
     );
@@ -100,6 +119,7 @@ export default function ChatPage() {
 
     try {
       const requestBody: ChatApiRequest = {
+        sessionId,
         patientContext: context,
         conversationHistory: historyForRequest,
         message: content,
@@ -142,22 +162,38 @@ export default function ChatPage() {
 
         if (data.redFlag) {
           setRedFlag({ show: true, helplineNumber: data.helplineNumber });
-        } else if (
-          data.pendingGuidelineQueue.length === 0 &&
-          !data.nextActiveGuidelineId &&
-          !hasShownSafetyNet
-        ) {
-          // Once-per-session safety net (client-side only, never sent to
-          // the server) — asked only once nothing is queued and this is
-          // the first Green/Amber grade this session, never after Red.
-          setHasShownSafetyNet(true);
-          const safetyNetMessage: ChatMessage = {
-            id: makeMessageId(),
-            role: "assistant",
-            content: t("safetyNetMessage"),
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, safetyNetMessage]);
+          // Never shown alongside the interstitial itself — queued to
+          // appear only once the patient acknowledges it (see
+          // RedFlagInterstitial's onAcknowledge below), so identification
+          // can never delay the emergency guidance.
+          if (!hasIdentified) {
+            markAskedToIdentify();
+            setHasIdentified(true);
+            setIdentifyPendingAfterRedDismiss(true);
+          }
+        } else {
+          if (data.grade === "AMBER" && !hasIdentified) {
+            markAskedToIdentify();
+            setHasIdentified(true);
+            setShowIdentifyPrompt(true);
+          }
+          if (
+            data.pendingGuidelineQueue.length === 0 &&
+            !data.nextActiveGuidelineId &&
+            !hasShownSafetyNet
+          ) {
+            // Once-per-session safety net (client-side only, never sent to
+            // the server) — asked only once nothing is queued and this is
+            // the first Green/Amber grade this session, never after Red.
+            setHasShownSafetyNet(true);
+            const safetyNetMessage: ChatMessage = {
+              id: makeMessageId(),
+              role: "assistant",
+              content: t("safetyNetMessage"),
+              timestamp: new Date().toISOString(),
+            };
+            setMessages((prev) => [...prev, safetyNetMessage]);
+          }
         }
       } else {
         // error_failsafe: fail-safed on this complaint — start fresh for
@@ -201,6 +237,25 @@ export default function ChatPage() {
     setPendingGuidelineQueue([]);
     setHasShownSafetyNet(false);
     setRedFlag({ show: false, helplineNumber: "" });
+    // Clears any in-flight identify UI, but deliberately leaves
+    // `hasIdentified` alone — it's scoped to the whole anonymous session
+    // (persisted in localStorage), not just this visible transcript, so
+    // starting a new conversation shouldn't re-ask.
+    setShowIdentifyPrompt(false);
+    setIdentifyPendingAfterRedDismiss(false);
+  }
+
+  async function handleIdentifySubmit(name: string, contactNumber: string) {
+    setShowIdentifyPrompt(false);
+    try {
+      await fetch("/api/patient-session/identify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ sessionId, patientName: name, contactNumber }),
+      });
+    } catch (err) {
+      console.error("Failed to save identification", err);
+    }
   }
 
   if (!context) return null;
@@ -219,11 +274,23 @@ export default function ChatPage() {
         </div>
       )}
       <MessageList messages={messages} isAssistantTyping={isAssistantTyping} />
+      {showIdentifyPrompt && (
+        <IdentifyPrompt
+          onSubmit={handleIdentifySubmit}
+          onSkip={() => setShowIdentifyPrompt(false)}
+        />
+      )}
       <MessageInput onSend={handleSend} disabled={isAssistantTyping || redFlag.show} />
       <RedFlagInterstitial
         show={redFlag.show}
         helplineNumber={redFlag.helplineNumber}
-        onAcknowledge={() => setRedFlag((prev) => ({ ...prev, show: false }))}
+        onAcknowledge={() => {
+          setRedFlag((prev) => ({ ...prev, show: false }));
+          if (identifyPendingAfterRedDismiss) {
+            setIdentifyPendingAfterRedDismiss(false);
+            setShowIdentifyPrompt(true);
+          }
+        }}
       />
     </div>
   );
