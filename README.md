@@ -37,12 +37,12 @@ Copy `.env.example` to `.env.local` and fill in `ANTHROPIC_API_KEY` (required �
 
 `PatientSession`/`Message`/`GradeEvent` (schema in `lib/db/schema.prisma`, a non-default location wired via `prisma.config.ts`) are written on every `/api/chat` turn via `lib/db/sessions.ts`, using Prisma's Neon serverless driver adapter (`lib/db/prisma.ts`) rather than a raw TCP connection — see the plan's "Prisma + serverless Postgres connections" risk for why. This is **best-effort**: a DB outage is caught and logged in `route.ts`'s `persistTurn`, never allowed to break, delay, or alter the patient-facing chat response. Each `GradeEvent` also stores a snapshot of `gradeLabel`/`description`/`actionText` at grading time — a deliberate historical copy, not a live re-derivation, so the staff dashboard's drill-down always shows exactly what the patient saw even if a guideline file is edited later.
 
-To set up a real database:
-1. Create a Postgres store from the Vercel dashboard (Neon-backed) and pull `DATABASE_URL` into `.env.local` (or copy it from the Vercel project settings).
-2. Run `npx prisma migrate dev --name init` once, locally, to create the tables (needs `DATABASE_URL` reachable — `prisma.config.ts` loads `.env.local` via `dotenv` for the CLI, since defining a config file opts out of Prisma's own auto-loading).
-3. Add `DATABASE_URL` to the Vercel project's environment variables alongside the Phase 6.5 vars, then `npx prisma migrate deploy` against production (or let your deploy pipeline run it).
+Migrations live in `lib/db/migrations/` and run automatically as part of every Vercel deploy — `package.json`'s `build` script runs `prisma migrate deploy` before `next build`, but only when Vercel's own `VERCEL=1` system env var is set, so a plain local `npm run build` (no database in this environment at all) doesn't try to run it. This matters because when the Postgres store is provisioned via Vercel's Marketplace integration (Neon), the resulting `DATABASE_URL` and friends are created as **write-only/"sensitive" env vars** — `vercel env pull` and the dashboard can no longer display their value once set, so there's no way to run migrations from a local machine against that database at all. Instead:
+1. The initial migration's SQL was generated once, without ever needing a live connection, via `npx prisma migrate diff --from-empty --to-schema-datamodel=lib/db/schema.prisma --script` — this diffs "an empty database" against `schema.prisma` directly.
+2. Any future schema change: edit `lib/db/schema.prisma`, then regenerate the next migration the same way (diffing the previous migrations' cumulative state against the new schema) and commit the new `lib/db/migrations/<timestamp>_<name>/migration.sql` — or, if you do have a real `DATABASE_URL` reachable from your machine (e.g. a personal dev database, not the Marketplace-managed one), the normal `npx prisma migrate dev --name <name>` works too.
+3. Pushing to `main` deploys to Vercel, whose build step has full (non-sensitive-restricted) access to `DATABASE_URL` and runs `prisma migrate deploy` for you.
 
-`npm install`'s `postinstall` script runs `prisma generate` automatically (needed for `@prisma/client`'s types/runtime) — it does **not** need a reachable database, only the schema file.
+`npm install`'s `postinstall` script runs `prisma generate` automatically (needed for `@prisma/client`'s types/runtime) — it does **not** need a reachable database, only the schema file, so it works the same everywhere.
 
 ## Staff dashboard (`/staff/*`)
 
