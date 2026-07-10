@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "if [ \"$VERCEL\" = \"1\" ]; then npx prisma migrate deploy; fi && next build",
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
