@@ -146,11 +146,11 @@ export default function ChatPage() {
       };
       setMessages((prev) => [...prev, assistantMessage]);
 
-      if (data.type === "follow_up" || data.type === "conversational") {
-        // conversational is a no-symptom reply (greeting, thanks, small
-        // talk) — never graded, so this just syncs state (a no-op here,
-        // since this branch only ever fires with no questionnaire already
-        // in progress — see route.ts).
+      if (data.type === "follow_up") {
+        // Covers both "still gathering fields for a matched guideline" and
+        // "just natural conversation, nothing symptom-related yet" — see
+        // route.ts's resolvedGuidelineId-null branch. Either way this is a
+        // no-op state sync when nothing's actually in progress.
         setActiveGuidelineId(data.activeGuidelineId);
         setPendingFields(data.pendingFields);
         setFollowUpRoundCount(data.followUpRoundCount);

@@ -32,16 +32,8 @@ export interface ChatApiRequest {
 
 export type ChatApiResponse =
   | {
+      /** Covers both "still gathering required fields for a matched guideline" and "just natural conversation, nothing symptom-related yet" — see app/api/chat/route.ts's resolvedGuidelineId-null branch. Either way, assistantMessage is the model's own natural conversational reply (lib/llm/extraction.ts), not a canned question. */
       type: "follow_up";
-      assistantMessage: string;
-      activeGuidelineId: string | null;
-      pendingFields: PendingFields;
-      followUpRoundCount: number;
-      pendingGuidelineQueue: PendingGuidelineQueue;
-    }
-  | {
-      /** A non-symptom message (greeting, thanks, small talk, app questions) — never graded, see lib/llm/conversation.ts. Mirrors follow_up's state-carrying fields (always no-ops here: no questionnaire was in progress for this branch to fire). */
-      type: "conversational";
       assistantMessage: string;
       activeGuidelineId: string | null;
       pendingFields: PendingFields;

@@ -13,10 +13,9 @@ export const extractionResultSchema = z.object({
   possibleExcludedCondition: z.boolean(),
   extractedFields: z.record(z.string(), fieldValueSchema),
   missingRequiredFields: z.array(z.string()),
-  followUpQuestion: z.string().nullable(),
   multipleSymptomsDetected: z.array(z.string()),
-  /** True if the message alludes to any bodily symptom/health concern at all, even vaguely — see lib/llm/extraction.ts's doc comment on why this is conservative-biased. */
-  mentionsPhysicalSymptom: z.boolean(),
+  /** Always populated — the model's own natural, warm conversational reply. Used directly for follow_up-shaped turns; superseded by phrasing.ts's own rephrasing once a turn is graded. See lib/llm/extraction.ts's doc comment. */
+  assistantMessage: z.string(),
 });
 export type ExtractionResult = z.infer<typeof extractionResultSchema>;
 
@@ -30,12 +29,6 @@ export const phrasingResultSchema = z.object({
   message: z.string(),
 });
 export type PhrasingResult = z.infer<typeof phrasingResultSchema>;
-
-/** Validates the conversational-reply tool's output — see lib/llm/conversation.ts. */
-export const conversationalResultSchema = z.object({
-  message: z.string(),
-});
-export type ConversationalResult = z.infer<typeof conversationalResultSchema>;
 
 /** Defensive validation of the incoming /api/chat request body. */
 export const chatApiRequestSchema = z.object({
