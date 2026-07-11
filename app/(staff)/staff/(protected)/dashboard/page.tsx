@@ -3,11 +3,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertBar } from "@/components/staff/AlertBar";
+import { NewRedBanner } from "@/components/staff/NewRedBanner";
 import { PatientWorklistTable } from "@/components/staff/PatientWorklistTable";
+import { useNewRedAlerts } from "@/lib/realtime/subscribe";
+import type { NewRedEventPayload } from "@/lib/realtime/constants";
 import type { StaffSessionsResponse, StaffSessionSummary } from "@/types/api";
 
-// Poll-only for now (no real-time push until Phase 9's Pusher wiring) —
-// 20-30s per the plan's confirmed decision for Amber/Green rows.
+// Amber/Green rows stay poll-only per the plan's confirmed decision; Red
+// gets an instant push via Pusher (see useNewRedAlerts below) on top of
+// this, so a Red session never waits a full poll cycle to appear.
 const POLL_INTERVAL_MS = 25_000;
 // Separate, faster tick just to keep the "N min ago" elapsed-time badges
 // live-updating between polls, without refetching data.
@@ -17,6 +21,7 @@ export default function StaffDashboardPage() {
   const router = useRouter();
   const [sessions, setSessions] = useState<StaffSessionSummary[]>([]);
   const [nowMs, setNowMs] = useState(() => Date.now());
+  const [newRedAlert, setNewRedAlert] = useState<NewRedEventPayload | null>(null);
 
   const fetchSessions = useCallback(async () => {
     try {
@@ -46,9 +51,20 @@ export default function StaffDashboardPage() {
     return () => clearInterval(clock);
   }, []);
 
+  const handleNewRed = useCallback(
+    (payload: NewRedEventPayload) => {
+      setNewRedAlert(payload);
+      fetchSessions();
+    },
+    [fetchSessions]
+  );
+
+  useNewRedAlerts(handleNewRed);
+
   return (
     <div className="min-h-full">
       <AlertBar sessions={sessions} />
+      <NewRedBanner alert={newRedAlert} onDismiss={() => setNewRedAlert(null)} />
       <PatientWorklistTable
         sessions={sessions}
         nowMs={nowMs}

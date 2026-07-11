@@ -2,8 +2,9 @@ import { recordChatTurn } from "@/lib/db/sessions";
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
 import { chatApiRequestSchema } from "@/lib/llm/schemas";
+import { publishNewRedEvent } from "@/lib/realtime/publish";
 import { checkGlobalOverrides, evaluate, moreSevereEvaluation } from "@/lib/triage/engine";
-import { findGuideline } from "@/lib/triage/registry";
+import { findGuideline, resolveDisplayName } from "@/lib/triage/registry";
 import type { EvaluationResult, PatientContext } from "@/lib/triage/types";
 import type { ChatApiResponse, PendingFields } from "@/types/api";
 
@@ -46,6 +47,21 @@ async function persistTurn(
     });
   } catch (err) {
     console.error("Failed to persist chat turn", err);
+  }
+
+  // Real-time push for Red only (Amber/Green stay poll-only, see the
+  // plan's Staff dashboard section) — a Pusher outage must never affect
+  // the patient-facing response, so this is its own try/catch, always
+  // after persistence, never awaited by the caller's critical path.
+  if (evaluation?.grade === "RED") {
+    try {
+      await publishNewRedEvent({
+        sessionId,
+        presentingComplaint: resolveDisplayName(evaluation.guidelineId),
+      });
+    } catch (err) {
+      console.error("Failed to publish real-time Red alert", err);
+    }
   }
 }
 

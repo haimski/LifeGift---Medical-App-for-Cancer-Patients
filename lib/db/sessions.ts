@@ -51,12 +51,15 @@ export async function recordChatTurn({
     },
     // Patient context could in principle change between turns (e.g. the
     // patient goes back and edits an onboarding answer) — keep the row in
-    // sync rather than freezing it at first contact.
+    // sync rather than freezing it at first contact. A fresh Red grade also
+    // clears any earlier acknowledgment — a stale "acknowledged" from a
+    // past incident must never suppress a new emergency (Phase 9).
     update: {
       cancerType: patientContext.cancerType,
       treatmentType: patientContext.treatmentType,
       helplineNumber: patientContext.helplineNumber,
       recentSactWithin6Weeks: patientContext.recentSactWithin6Weeks,
+      ...(grade === "RED" ? { acknowledgedAt: null, acknowledgedBy: null } : {}),
     },
   });
 
@@ -119,6 +122,8 @@ export async function listActiveSessions(): Promise<StaffSessionSummary[]> {
         gradeLabel: latest.gradeLabel,
         gradedAt: latest.createdAt.toISOString(),
         gradeTrend: session.gradeEvents.map((event) => event.grade as RagGrade),
+        acknowledgedAt: session.acknowledgedAt?.toISOString() ?? null,
+        acknowledgedBy: session.acknowledgedBy,
       };
     });
 }
@@ -165,5 +170,26 @@ export async function getSessionDetail(sessionId: string): Promise<StaffSessionD
       actionText: event.actionText,
       createdAt: event.createdAt.toISOString(),
     })),
+    acknowledgedAt: session.acknowledgedAt?.toISOString() ?? null,
+    acknowledgedBy: session.acknowledgedBy,
   };
+}
+
+/**
+ * Marks a session's current Red as handled — clears the alert-bar pulse
+ * (Phase 9). acknowledgedBy is free text (v1 has a single shared staff
+ * login), optional, purely for a paper-trail. Only ever meaningful for a
+ * session that's actually graded Red; acknowledging a Green/Amber session
+ * is harmless but has no visible effect since only Red rows show the
+ * unacknowledged-pulse styling.
+ */
+export async function acknowledgeSession(
+  sessionId: string,
+  acknowledgedBy: string | null
+): Promise<void> {
+  const prisma = getPrismaClient();
+  await prisma.patientSession.update({
+    where: { id: sessionId },
+    data: { acknowledgedAt: new Date(), acknowledgedBy },
+  });
 }

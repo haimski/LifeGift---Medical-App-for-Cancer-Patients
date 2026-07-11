@@ -58,6 +58,8 @@ describe("GET /api/staff/sessions/[id]", () => {
       helplineNumber: "03-1234567",
       messages: [],
       gradeEvents: [],
+      acknowledgedAt: null,
+      acknowledgedBy: null,
     };
     mockedGetSessionDetail.mockResolvedValue(detail);
 

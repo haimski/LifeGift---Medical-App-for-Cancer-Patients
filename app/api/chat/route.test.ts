@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/llm/extraction", () => ({
   callExtraction: vi.fn(),
@@ -9,10 +9,14 @@ vi.mock("@/lib/llm/phrasing", () => ({
 vi.mock("@/lib/db/sessions", () => ({
   recordChatTurn: vi.fn(),
 }));
+vi.mock("@/lib/realtime/publish", () => ({
+  publishNewRedEvent: vi.fn(),
+}));
 
 import { callExtraction } from "@/lib/llm/extraction";
 import { callPhrasing } from "@/lib/llm/phrasing";
 import { recordChatTurn } from "@/lib/db/sessions";
+import { publishNewRedEvent } from "@/lib/realtime/publish";
 import type { ExtractionResult } from "@/lib/llm/schemas";
 import type { PatientContext } from "@/lib/triage/types";
 import type { ChatApiResponse } from "@/types/api";
@@ -21,6 +25,7 @@ import { POST } from "@/app/api/chat/route";
 const mockedExtraction = vi.mocked(callExtraction);
 const mockedPhrasing = vi.mocked(callPhrasing);
 const mockedRecordChatTurn = vi.mocked(recordChatTurn);
+const mockedPublishNewRedEvent = vi.mocked(publishNewRedEvent);
 
 const patientContext: PatientContext = {
   cancerType: "Breast",
@@ -515,6 +520,89 @@ describe("/api/chat route", () => {
       if (body.type === "graded") {
         expect(body.grade).toBe("RED");
         expect(body.redFlag).toBe(true);
+      }
+    });
+  });
+
+  describe("real-time Red alerts (Phase 9)", () => {
+    beforeEach(() => {
+      // The preceding "persistence" block's last test leaves recordChatTurn
+      // rejecting (vi.clearAllMocks() clears call history, not mocked
+      // implementations) — reset it so these tests aren't order-dependent.
+      mockedRecordChatTurn.mockResolvedValue(undefined);
+      mockedPublishNewRedEvent.mockResolvedValue(undefined);
+    });
+
+    it("publishes a Pusher event with the sessionId and presenting complaint when a turn grades Red", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "diarrhoea",
+          extractedFields: { stoolsPerDayOverBaseline: 8, hasBloodInStool: false },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "RED", message: "urgent message" });
+
+      await POST(
+        makeRequest(
+          baseRequestBody({
+            sessionId: "session-red",
+            message: "8 times today",
+            activeGuidelineId: "diarrhoea",
+          })
+        )
+      );
+
+      expect(mockedPublishNewRedEvent).toHaveBeenCalledWith(
+        expect.objectContaining({ sessionId: "session-red" })
+      );
+    });
+
+    it("does not publish for Amber/Green grades", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          extractedFields: { vomitingEpisodesLast24h: 1 },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "GREEN", message: "phrased message" });
+
+      await POST(makeRequest(baseRequestBody({ message: "sick once", activeGuidelineId: "vomiting" })));
+
+      expect(mockedPublishNewRedEvent).not.toHaveBeenCalled();
+    });
+
+    it("does not publish for a follow_up turn (nothing graded yet)", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "vomiting",
+          missingRequiredFields: ["vomitingEpisodesLast24h"],
+          assistantMessage: "How many times?",
+        })
+      );
+
+      await POST(makeRequest(baseRequestBody({ message: "I've been sick" })));
+
+      expect(mockedPublishNewRedEvent).not.toHaveBeenCalled();
+    });
+
+    it("still returns the graded Red response even if the Pusher publish itself fails", async () => {
+      mockedExtraction.mockResolvedValue(
+        extraction({
+          matchedGuidelineId: "diarrhoea",
+          extractedFields: { stoolsPerDayOverBaseline: 8, hasBloodInStool: false },
+        })
+      );
+      mockedPhrasing.mockResolvedValue({ grade: "RED", message: "urgent message" });
+      mockedPublishNewRedEvent.mockRejectedValue(new Error("Pusher unreachable"));
+
+      const res = await POST(
+        makeRequest(baseRequestBody({ message: "8 times today", activeGuidelineId: "diarrhoea" }))
+      );
+      const body = (await res.json()) as ChatApiResponse;
+
+      expect(body.type).toBe("graded");
+      if (body.type === "graded") {
+        expect(body.grade).toBe("RED");
       }
     });
   });
