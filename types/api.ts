@@ -74,6 +74,9 @@ export interface StaffSessionSummary {
   gradedAt: string;
   /** Chronological (oldest → newest) grade history for this session's trend indicator. */
   gradeTrend: RagGrade[];
+  /** Null means unacknowledged. See POST /api/staff/sessions/[id]/acknowledge. */
+  acknowledgedAt: string | null;
+  acknowledgedBy: string | null;
 }
 
 export interface StaffSessionsResponse {
@@ -111,4 +114,13 @@ export interface StaffSessionDetail {
   helplineNumber: string;
   messages: StaffTranscriptMessage[];
   gradeEvents: StaffGradeEvent[];
+  /** Null means unacknowledged. See POST /api/staff/sessions/[id]/acknowledge. */
+  acknowledgedAt: string | null;
+  acknowledgedBy: string | null;
+}
+
+/** POST /api/staff/sessions/[id]/acknowledge request body. */
+export interface AcknowledgeRequest {
+  /** Free text, optional — v1 has a single shared staff login, no per-user accounts, so this is just a paper-trail, not enforced. */
+  acknowledgedBy?: string;
 }

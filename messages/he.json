@@ -137,7 +137,14 @@
       "actionLabel": "פעולה נדרשת",
       "contactTitle": "פרטי יצירת קשר",
       "contactAnonymous": "המטופל/ת עדיין לא זוהה/תה.",
-      "notFound": "המטופל/ת לא נמצא/ה."
+      "notFound": "המטופל/ת לא נמצא/ה.",
+      "unacknowledgedLabel": "עדיין לא טופל",
+      "acknowledgeButton": "סמן/י כטופל",
+      "acknowledgedAt": "טופל בשעה {time}",
+      "acknowledgedByName": "טופל על ידי {name} בשעה {time}"
+    },
+    "newRedBanner": {
+      "message": "מטופל/ת חדש/ה בדרגה אדומה: {complaint}"
     }
   }
 }

@@ -1,12 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion } from "framer-motion";
 import { useTranslations } from "next-intl";
 import { GradeIcon } from "@/components/staff/GradeIcon";
 import type { StaffSessionDetail } from "@/types/api";
 
 interface DrillDownPanelProps {
   detail: StaffSessionDetail;
+  onAcknowledge: () => void;
+}
+
+function formatTime(iso: string): string {
+  return new Intl.DateTimeFormat("he-IL", { hour: "2-digit", minute: "2-digit" }).format(
+    new Date(iso)
+  );
 }
 
 /**
@@ -17,9 +25,11 @@ interface DrillDownPanelProps {
  * judgement or a live re-derivation that could drift from what the patient
  * actually saw.
  */
-export function DrillDownPanel({ detail }: DrillDownPanelProps) {
+export function DrillDownPanel({ detail, onAcknowledge }: DrillDownPanelProps) {
   const t = useTranslations("dashboard.drillDown");
   const tTreatment = useTranslations("treatmentTypes");
+  const latestGrade = detail.gradeEvents[detail.gradeEvents.length - 1]?.grade ?? null;
+  const isUnacknowledgedRed = latestGrade === "RED" && !detail.acknowledgedAt;
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-6 sm:px-6">
@@ -38,6 +48,46 @@ export function DrillDownPanel({ detail }: DrillDownPanelProps) {
           {detail.cancerType} — {tTreatment(detail.treatmentType)}
         </p>
       </div>
+
+      {latestGrade === "RED" && (
+        <AnimatePresence mode="wait">
+          {isUnacknowledgedRed ? (
+            <motion.div
+              key="unacknowledged"
+              initial={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="flex items-center justify-between gap-3 rounded-2xl border border-rag-red bg-rag-red-bg px-4 py-3"
+            >
+              <span className="text-sm font-medium text-rag-red-badge-text">
+                {t("unacknowledgedLabel")}
+              </span>
+              <button
+                type="button"
+                onClick={onAcknowledge}
+                className="shrink-0 rounded-full bg-rag-red px-4 py-1.5 text-sm font-semibold text-white transition-colors hover:brightness-95"
+              >
+                {t("acknowledgeButton")}
+              </button>
+            </motion.div>
+          ) : (
+            <motion.p
+              key="acknowledged"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+              className="text-sm text-foreground-muted"
+            >
+              {detail.acknowledgedBy
+                ? t("acknowledgedByName", {
+                    name: detail.acknowledgedBy,
+                    time: formatTime(detail.acknowledgedAt!),
+                  })
+                : t("acknowledgedAt", { time: formatTime(detail.acknowledgedAt!) })}
+            </motion.p>
+          )}
+        </AnimatePresence>
+      )}
 
       <section>
         <h2 className="mb-2 text-sm font-semibold text-heading">{t("contactTitle")}</h2>

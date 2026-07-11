@@ -137,7 +137,14 @@
       "actionLabel": "Required action",
       "contactTitle": "Contact details",
       "contactAnonymous": "This patient hasn't been identified yet.",
-      "notFound": "Patient not found."
+      "notFound": "Patient not found.",
+      "unacknowledgedLabel": "Not yet handled",
+      "acknowledgeButton": "Mark as handled",
+      "acknowledgedAt": "Handled at {time}",
+      "acknowledgedByName": "Handled by {name} at {time}"
+    },
+    "newRedBanner": {
+      "message": "New Red-graded patient: {complaint}"
     }
   }
 }

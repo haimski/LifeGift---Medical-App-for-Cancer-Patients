@@ -2,20 +2,24 @@ import { auth } from "@/lib/auth/staffAuth";
 import { listActiveSessions } from "@/lib/db/sessions";
 import type { RagGrade, StaffSessionsResponse } from "@/types/api";
 
-const SEVERITY_RANK: Record<RagGrade, number> = { RED: 0, AMBER: 1, GREEN: 2 };
-
 /**
  * Default sort is urgency, not time or name (see the plan's Staff dashboard
- * section): Red first, then Amber, then Green. Within Red/Amber, oldest
- * graded-at first (most overdue for a look); within Green, most recent
- * first (recency, not urgency, since nothing needs reviewing there). Phase 8
- * has no acknowledge concept yet, so "unacknowledged Red first" collapses
- * to just "Red first" for now — Phase 9 adds the acknowledged/unacknowledged
- * split within Red.
+ * section): unacknowledged Red first, then acknowledged-but-still-Red, then
+ * Amber, then Green. Within Red/Amber, oldest graded-at first (most overdue
+ * for a look); within Green, most recent first (recency, not urgency, since
+ * nothing needs reviewing there).
  */
-function sortByUrgency<T extends { currentGrade: RagGrade; gradedAt: string }>(rows: T[]): T[] {
+function urgencyRank(row: { currentGrade: RagGrade; acknowledgedAt: string | null }): number {
+  if (row.currentGrade === "RED") return row.acknowledgedAt ? 1 : 0;
+  if (row.currentGrade === "AMBER") return 2;
+  return 3;
+}
+
+function sortByUrgency<
+  T extends { currentGrade: RagGrade; acknowledgedAt: string | null; gradedAt: string },
+>(rows: T[]): T[] {
   return [...rows].sort((a, b) => {
-    const rankDiff = SEVERITY_RANK[a.currentGrade] - SEVERITY_RANK[b.currentGrade];
+    const rankDiff = urgencyRank(a) - urgencyRank(b);
     if (rankDiff !== 0) return rankDiff;
     return a.currentGrade === "GREEN"
       ? b.gradedAt.localeCompare(a.gradedAt)

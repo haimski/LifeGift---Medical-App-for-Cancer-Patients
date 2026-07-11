@@ -34,7 +34,11 @@ interface PatientRowProps {
  * ease-out) rather than popping in abruptly — see the plan's Graphic
  * language section. Relies on the parent keying rows by session.id: an
  * already-mounted row's `initial` animation doesn't re-fire on every poll,
- * only genuinely new rows animate in.
+ * only genuinely new rows animate in. `layout` lets a row glide to its new
+ * position when urgency-sort reorders the list, instead of jumping. An
+ * unacknowledged Red row also gets a slow, soft opacity pulse (~1.8s
+ * ease-in-out, alternating) — deliberately gentle, never a rapid flash, per
+ * the plan's Graphic language section.
  */
 export function PatientRow({ session, nowMs, onOpen }: PatientRowProps) {
   const t = useTranslations("dashboard.row");
@@ -42,13 +46,23 @@ export function PatientRow({ session, nowMs, onOpen }: PatientRowProps) {
   const tTreatment = useTranslations("treatmentTypes");
   const identity =
     session.patientName ?? t("anonymousLabel", { shortId: session.id.slice(0, 8) });
+  const isUnacknowledgedRed = session.currentGrade === "RED" && !session.acknowledgedAt;
 
   return (
     <motion.div
       role="row"
+      layout
       initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: "easeOut" }}
+      animate={
+        isUnacknowledgedRed ? { opacity: [1, 0.55, 1], y: 0 } : { opacity: 1, y: 0 }
+      }
+      transition={{
+        layout: { duration: 0.3, ease: "easeInOut" },
+        y: { duration: 0.25, ease: "easeOut" },
+        opacity: isUnacknowledgedRed
+          ? { duration: 1.8, repeat: Infinity, ease: "easeInOut" }
+          : { duration: 0.25, ease: "easeOut" },
+      }}
       onClick={() => onOpen(session.id)}
       className={`grid cursor-pointer grid-cols-[auto_1fr_auto_auto_auto] items-center gap-3 border-b border-s-4 border-border bg-surface px-4 py-3 text-sm text-foreground hover:bg-azure-50 sm:px-6 ${BORDER_CLASSES[session.currentGrade]}`}
     >

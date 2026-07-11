@@ -33,6 +33,8 @@ function makeSession(overrides: Partial<StaffSessionSummary>): StaffSessionSumma
     gradeLabel: "דרגה 1 (ירוק)",
     gradedAt: new Date().toISOString(),
     gradeTrend: ["GREEN"],
+    acknowledgedAt: null,
+    acknowledgedBy: null,
     ...overrides,
   };
 }

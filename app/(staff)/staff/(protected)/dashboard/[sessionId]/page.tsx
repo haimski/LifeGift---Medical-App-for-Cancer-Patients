@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { DrillDownPanel } from "@/components/staff/DrillDownPanel";
@@ -35,10 +35,26 @@ export default function StaffSessionDrillDownPage() {
     };
   }, [params.sessionId]);
 
+  const handleAcknowledge = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/staff/sessions/${params.sessionId}/acknowledge`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (!res.ok) return;
+      setDetail((prev) =>
+        prev ? { ...prev, acknowledgedAt: new Date().toISOString(), acknowledgedBy: null } : prev
+      );
+    } catch (err) {
+      console.error("Failed to acknowledge session", err);
+    }
+  }, [params.sessionId]);
+
   if (notFound) {
     return <p className="px-4 py-8 text-center text-sm text-foreground-muted">{t("notFound")}</p>;
   }
   if (!detail) return null;
 
-  return <DrillDownPanel detail={detail} />;
+  return <DrillDownPanel detail={detail} onAcknowledge={handleAcknowledge} />;
 }

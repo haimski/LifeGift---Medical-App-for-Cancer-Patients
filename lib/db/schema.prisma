@@ -33,6 +33,13 @@ model PatientSession {
   /// being set.
   patientName            String?
   contactNumber          String?
+  /// Set via POST /api/staff/sessions/[id]/acknowledge (Phase 9) — clears
+  /// the alert-bar pulse for this session's current Red. acknowledgedBy is
+  /// free text (v1 has a single shared staff login, no per-user accounts),
+  /// optionally typed in at acknowledge time for a paper-trail, not
+  /// enforced. Null means unacknowledged.
+  acknowledgedAt         DateTime?
+  acknowledgedBy         String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
