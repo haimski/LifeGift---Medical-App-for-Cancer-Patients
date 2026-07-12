@@ -12,10 +12,11 @@ interface IdentifyPromptProps {
 
 /**
  * The progressive-identification prompt shown once, the first time a
- * session's turn grades Amber or Red — see app/chat/page.tsx for the
- * timing rules (never blocks or delays the RedFlagInterstitial). Purely a
- * request: skipping is always one tap away, and only affects whether staff
- * can proactively follow up, never the patient's own guidance.
+ * session's turn grades Amber or Red — see app/chat/page.tsx; shown
+ * immediately once a grade lands, since there's no separate emergency
+ * interstitial to sequence around. Purely a request: skipping is always
+ * one tap away, and only affects whether staff can proactively follow up,
+ * never the patient's own guidance.
  */
 export function IdentifyPrompt({ onSubmit, onSkip }: IdentifyPromptProps) {
   const t = useTranslations("chat.identify");

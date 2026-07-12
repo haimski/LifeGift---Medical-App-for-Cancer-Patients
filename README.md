@@ -1,4 +1,4 @@
-# LifeGift
+# Lumina Care AI
 
 A mobile-first chat app for cancer patients to check in about symptoms during treatment, plus a staff dashboard for oncology teams to see who needs attention. Full design rationale lives in the plan at `~/.claude/plans/i-want-to-build-elegant-llama.md`; this file is the quick orientation for anyone (including future-you) opening the repo.
 
