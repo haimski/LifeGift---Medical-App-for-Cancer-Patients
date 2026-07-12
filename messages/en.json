@@ -6,9 +6,9 @@
   },
   "onboarding": {
     "welcome": {
-      "title": "Welcome to LifeGift",
+      "title": "Welcome to Lumina Care AI",
       "subtitle": "A calm place to check in about symptoms during your cancer treatment.",
-      "description": "LifeGift can help you understand whether a symptom is safe to watch, worth calling your care team about, or needs urgent attention — based on the same guidance your 24-hour oncology helpline uses.",
+      "description": "Lumina Care AI can help you understand whether a symptom is safe to watch, worth calling your care team about, or needs urgent attention — based on the same guidance your 24-hour oncology helpline uses.",
       "emergencyNotice": "This does not replace emergency care. If you think this is a medical emergency, call 999 now.",
       "noAccountNeeded": "No account or sign-in needed to get started."
     },
@@ -77,23 +77,6 @@
       "save": "Save",
       "skip": "Not now"
     }
-  },
-  "gradeBadge": {
-    "green": "Green — no cause for concern",
-    "amber": "Amber — contact your team",
-    "red": "Red — urgent"
-  },
-  "redFlag": {
-    "title": "Go to A&E now",
-    "body": "Based on what you've told us, this needs urgent medical attention right away — please don't wait to see if it improves.",
-    "call999": "Call 999",
-    "callHelpline": "Call your 24-hour helpline",
-    "acknowledge": "I understand"
-  },
-  "safetyHeader": {
-    "helplineSetUp": "24-hour helpline",
-    "helplineNotSetUp": "Helpline not set up",
-    "emergencyLink": "Life-threatening? Call 999"
   },
   "dashboard": {
     "login": {

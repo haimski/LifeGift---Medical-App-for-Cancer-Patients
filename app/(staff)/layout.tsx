@@ -10,7 +10,7 @@ const heebo = Heebo({
 });
 
 export const metadata: Metadata = {
-  title: "LifeGift — צוות",
+  title: "Lumina Care AI — צוות",
   description: "לוח מעקב עבור צוות הטיפול האונקולוגי.",
 };
 

@@ -7,7 +7,6 @@ export interface ChatMessage {
   role: "patient" | "assistant";
   content: string;
   timestamp: string;
-  grade?: RagGrade;
 }
 
 /** Fields extracted from patient free text, keyed by ScreeningField id. */
@@ -46,8 +45,6 @@ export type ChatApiResponse =
       grade: RagGrade;
       guidelineId: string;
       actionSummary: string;
-      redFlag: boolean;
-      helplineNumber: string;
       /** Set when bridging into a queued co-mentioned guideline that needs a follow-up question — the client should treat this as activeGuidelineId (with empty pendingFields) on the next turn instead of starting fresh. */
       nextActiveGuidelineId: string | null;
       pendingGuidelineQueue: PendingGuidelineQueue;
@@ -56,7 +53,6 @@ export type ChatApiResponse =
       type: "error_failsafe";
       assistantMessage: string;
       grade: RagGrade;
-      redFlag: boolean;
     };
 
 /** One row in the staff worklist — GET /api/staff/sessions. */

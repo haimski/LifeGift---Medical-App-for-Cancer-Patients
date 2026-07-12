@@ -112,7 +112,6 @@ describe("/api/chat route", () => {
     expect(body.type).toBe("graded");
     if (body.type === "graded") {
       expect(body.grade).toBe("RED");
-      expect(body.redFlag).toBe(true);
       expect(body.assistantMessage).toBe("some mismatched phrasing");
     }
   });
@@ -143,7 +142,6 @@ describe("/api/chat route", () => {
     expect(body.type).toBe("graded");
     if (body.type === "graded") {
       expect(body.grade).toBe("RED");
-      expect(body.redFlag).toBe(true);
       expect(body.guidelineId).toBe("neutropenic_sepsis_override");
     }
   });
@@ -165,8 +163,12 @@ describe("/api/chat route", () => {
     expect(body.type).toBe("graded");
     if (body.type === "graded") {
       expect(body.grade).toBe("RED");
-      expect(body.redFlag).toBe(true);
       expect(body.assistantMessage).toBe(body.actionSummary);
+      // No separate redFlag/interstitial signal exists any more — this is
+      // the scenario where phrasing is unavailable and the raw engine
+      // action text is the *only* thing conveying urgency to the patient,
+      // so it must still say to call emergency services, in-band.
+      expect(body.assistantMessage).toContain("999");
     }
   });
 
@@ -179,7 +181,6 @@ describe("/api/chat route", () => {
     expect(body.type).toBe("error_failsafe");
     if (body.type === "error_failsafe") {
       expect(body.grade).toBe("AMBER");
-      expect(body.redFlag).toBe(false);
     }
     expect(mockedPhrasing).not.toHaveBeenCalled();
   });
@@ -378,7 +379,6 @@ describe("/api/chat route", () => {
         // chest_pain grades Red unconditionally -> must win over the
         // primary complaint's Green, even though vomiting was mentioned first.
         expect(body.grade).toBe("RED");
-        expect(body.redFlag).toBe(true);
         expect(body.guidelineId).toBe("chest_pain");
         expect(body.nextActiveGuidelineId).toBeNull();
         expect(body.assistantMessage).toContain("כאב בחזה");
@@ -519,7 +519,6 @@ describe("/api/chat route", () => {
       expect(body.type).toBe("graded");
       if (body.type === "graded") {
         expect(body.grade).toBe("RED");
-        expect(body.redFlag).toBe(true);
       }
     });
   });

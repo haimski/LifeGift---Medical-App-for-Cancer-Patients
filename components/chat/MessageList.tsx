@@ -22,11 +22,7 @@ export function MessageList({ messages, isAssistantTyping }: MessageListProps) {
         message.role === "patient" ? (
           <PatientBubble key={message.id} content={message.content} />
         ) : (
-          <AssistantBubble
-            key={message.id}
-            content={message.content}
-            grade={message.grade}
-          />
+          <AssistantBubble key={message.id} content={message.content} />
         )
       )}
       {isAssistantTyping && <TypingIndicator />}

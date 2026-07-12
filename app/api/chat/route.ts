@@ -15,7 +15,7 @@ const FAIL_SAFE_MESSAGE =
   "מצטערים, משהו השתבש אצלנו. ליתר ביטחון, אנא פנה/י לקו החירום הפעיל 24 שעות ביממה כדי לדווח על התסמינים שלך.";
 
 function failSafeResponse(message: string): ChatApiResponse {
-  return { type: "error_failsafe", assistantMessage: message, grade: "AMBER", redFlag: false };
+  return { type: "error_failsafe", assistantMessage: message, grade: "AMBER" };
 }
 
 /**
@@ -93,7 +93,7 @@ interface BridgeResult {
   /** Set when bridging into a guideline that needs a follow-up question — becomes the next turn's activeGuidelineId. */
   nextActiveGuidelineId: string | null;
   remainingQueue: string[];
-  /** The more severe of the primary/any immediately-evaluated secondary — governs the response's top-level grade/redFlag. */
+  /** The more severe of the primary/any immediately-evaluated secondary — governs the response's top-level grade. */
   topLevelEvaluation: EvaluationResult;
 }
 
@@ -184,8 +184,6 @@ async function buildGradedResponse(
     grade: topLevelEvaluation.grade,
     guidelineId: topLevelEvaluation.guidelineId,
     actionSummary: topLevelEvaluation.actionText,
-    redFlag: topLevelEvaluation.grade === "RED",
-    helplineNumber: patientContext.helplineNumber,
     nextActiveGuidelineId: bridge.nextActiveGuidelineId,
     pendingGuidelineQueue: bridge.remainingQueue,
   };

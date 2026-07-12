@@ -52,7 +52,6 @@ export const chatApiRequestSchema = z.object({
       role: z.enum(["patient", "assistant"]),
       content: z.string(),
       timestamp: z.string(),
-      grade: z.enum(["GREEN", "AMBER", "RED"]).optional(),
     })
   ),
   message: z.string().min(1),
